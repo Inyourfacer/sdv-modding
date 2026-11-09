@@ -1,0 +1,46 @@
+{
+  "author": "Inyourfacer",
+  "uniqueid_prefix": "Inyourfacer",
+  "game_path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Stardew Valley",
+  "mods_path": null,
+  "content_patcher_format": null,
+  "comfyui": {
+    "stability_matrix_root": "C:\\StabilityMatrix",
+    "input_dir": "C:\\StabilityMatrix\\Data\\Packages\\ComfyUI\\input",
+    "output_dir": "C:\\StabilityMatrix\\Data\\Packages\\ComfyUI\\output",
+    "checkpoint": "illustriousXL_v01.safetensors",
+    "clip_skip": 2,
+    "loras": [
+      {
+        "name": "pixel-art-xl.safetensors",
+        "strength_model": 0.8,
+        "strength_clip": 0.8,
+        "trigger": "pixel art"
+      }
+    ],
+    "asset_type_loras": {
+      "portrait": [],
+      "portrait_hd": [],
+      "character_sprite": [],
+      "object_icon": [],
+      "tilesheet": []
+    },
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "steps": 28,
+    "cfg": 6.0,
+    "quality_prefix": "masterpiece, best quality, amazing quality, very aesthetic, absurdres",
+    "negative": "worst quality, low quality, lowres, bad anatomy, bad hands, jpeg artifacts, blurry, watermark, signature, text, logo, cropped, extra digits, 3d, realistic, photo",
+    "style_suffix": "stardew valley style, cozy farm game, soft shading, clean outlines",
+    "img2img_denoise": 0.6
+  },
+  "postprocess": {
+    "portrait_colors": 32,
+    "sprite_colors": 16,
+    "item_colors": 16,
+    "tile_colors": 24,
+    "outline": false,
+    "palette_png": null,
+    "background": "auto"
+  }
+}

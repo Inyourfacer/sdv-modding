@@ -1,0 +1,16 @@
+{
+  "NightFish": {
+    "DisplayName": "board.NightFish.name",
+    "Description": "board.NightFish.desc",
+    "Constellation": "Angler",
+    "Items": ["(O)132", "(O)148", "(O)151", "(O)269", "(O)798", "(O)799"],
+    "Required": 5
+  },
+  "Hearth": {
+    "DisplayName": "board.Hearth.name",
+    "Description": "board.Hearth.desc",
+    "Constellation": "Hearth",
+    "Items": ["(O)194", "(O)195", "(O)211", "(O)210", "(O)201", "(O)216"],
+    "Required": 5
+  }
+}

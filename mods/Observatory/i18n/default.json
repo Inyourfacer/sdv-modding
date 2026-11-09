@@ -1,0 +1,90 @@
+{
+  // ---- construction
+  "construction.started": "Robin has started building the observatory in the Backwoods. It'll take {{days}} days.",
+  "construction.finished": "The observatory in the Backwoods is finished!",
+
+  // ---- riddles & coordinates
+  "riddle.found": "A note, written in a careful, star-chart hand:^^\"{{riddle}}\"^^(The riddle has been copied into your star journal.)",
+  "coords.format": "RA {{ra}}h, Dec {{dec}}°",
+  "coords.revealed": "Coordinates found for {{name}}: {{coords}}",
+  "constellation.complete": "Charted {{name}}! {{perk}}",
+
+  // ---- telescope
+  "telescope.title": "Telescope",
+  "telescope.ra": "Right Ascension",
+  "telescope.dec": "Declination",
+  "telescope.observe": "Observe",
+  "telescope.clear": "The sky is clear. Set the coordinates and observe.",
+  "telescope.too_early": "The stars aren't out yet. Come back after {{start}}.",
+  "telescope.cloudy": "Clouds cover the sky tonight. Try another night.",
+  "telescope.nothing": "Only scattered, nameless stars. You'll need the right coordinates.",
+  "telescope.already": "You've already charted {{name}} here.",
+
+  // ---- puzzle
+  "puzzle.hint.visible": "Connect the stars along the faint outline.",
+  "puzzle.hint.fades": "Memorize the outline. It fades after {{seconds}} seconds, and some of these stars are decoys.",
+  "puzzle.hint.none": "No outline tonight. Trust the riddle.",
+  "puzzle.solved": "The constellation shines!",
+  "puzzle.lines": "Lines drawn: {{drawn}}",
+  "puzzle.controls": "Click two stars to draw a line (click again to erase). Right-click: undo.",
+  "puzzle.reset": "Clear all lines",
+
+  // ---- journal
+  "journal.title": "Star Journal",
+  "journal.unknown": "???",
+  "journal.coords": "Aim the telescope at {{coords}} on a clear night.",
+  "journal.footer": "Charted {{done}} of {{total}} constellations",
+
+  // ---- star-chart board
+  "board.title": "Star-Chart Board",
+  "board.donate": "Pin items to this chart",
+  "board.progress": "{{done}}/{{required}}: {{desc}}",
+  "board.complete": "Complete. The coordinates are in your star journal.",
+  "board.NightFish.name": "Chart of the Night Waters",
+  "board.NightFish.desc": "Fish that only bite after dark.",
+  "board.Hearth.name": "Chart of the Warm Kitchen",
+  "board.Hearth.desc": "Dishes for a long night of stargazing.",
+
+  // ---- constellations
+  "constellation.Sprout.name": "The Sprout",
+  "constellation.Sprout.desc": "A seedling reaching up from the horizon. Old farmers planted by it.",
+  "constellation.Sprout.riddle": "I sleep in a paper packet until the spring rain wakes me. Go where I wait to be bought, and look up.",
+  "constellation.Sprout.hint": "Maru has a riddle for you at the observatory.",
+  "constellation.Sprout.perk": "Watered crops have a 5% chance to grow a day faster.",
+
+  "constellation.Angler.name": "The Angler",
+  "constellation.Angler.desc": "A rod bent toward the sea, with a fish forever on the line.",
+  "constellation.Angler.hint": "Star-chart board: Chart of the Night Waters.",
+  "constellation.Angler.perk": "Your fishing bar is 8% larger.",
+
+  "constellation.Pickaxe.name": "The Pickaxe",
+  "constellation.Pickaxe.desc": "A miner's pick, its head buried in the dark between stars.",
+  "constellation.Pickaxe.riddle": "Stone goes in and metal comes out. The hammer sings where the river runs past the door.",
+  "constellation.Pickaxe.hint": "Something is scratched into the stone deep in the mines, around floor 40.",
+  "constellation.Pickaxe.perk": "Ore nodes have a 10% chance to drop an extra ore.",
+
+  "constellation.Hearth.name": "The Hearth",
+  "constellation.Hearth.desc": "A little house with smoke curling from its chimney.",
+  "constellation.Hearth.hint": "Star-chart board: Chart of the Warm Kitchen.",
+  "constellation.Hearth.perk": "Cooked food restores 15% more energy.",
+
+  "constellation.Junimo.name": "The Junimo",
+  "constellation.Junimo.desc": "A round little spirit with a leaf on its head. The Junimos say they came down from here.",
+  "constellation.Junimo.riddle": "The little ones fell from the stars and still speak their language. Stand in the house of the one who understands them.",
+  "constellation.Junimo.hint": "The Community Center remembers something about the stars.",
+  "constellation.Junimo.perk": "Junimo huts harvest 3 tiles farther out.",
+
+  "constellation.Stardrop.name": "The Stardrop",
+  "constellation.Stardrop.desc": "When a star in this constellation burns out, its last light falls to the valley as fruit. That's why every Stardrop tastes like your favorite thing: it carries a wish the star kept. Yoba's shrine faces this point in the sky.",
+  "constellation.Stardrop.riddle": "A fruit fell from the sky and never grew a tree. Where the old master stands waiting in the hidden wood, look for it after dark.",
+  "constellation.Stardrop.hint": "The Wizard will speak of this when you're ready.",
+  "constellation.Stardrop.shape": "Five points reach out and five valleys turn back in. Walk the rim once and come home.",
+  "constellation.Stardrop.perk": "+15 max energy.",
+
+  "constellation.OldFarmer.name": "The Old Farmer",
+  "constellation.OldFarmer.desc": "A bent figure with a wide hat, leaning on a cane. He's watched over this farm for a long time.",
+  "constellation.OldFarmer.riddle": "Where the old man rests and the stone remembers.",
+  "constellation.OldFarmer.hint": "An unsigned letter may find you.",
+  "constellation.OldFarmer.shape": "A brim floats above. A head, a long back, two slow feet. He leans on a cane to one side.",
+  "constellation.OldFarmer.perk": "All skill experience +5%."
+}

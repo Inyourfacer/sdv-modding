@@ -1,0 +1,41 @@
+{
+  "location.observatory": "Observatory",
+  "location.roof": "Observatory Roof",
+
+  // ---- unlock
+  "mail.maru.title": "The Observatory",
+  "mail.maru": "Dear @,^^Remember that ledge in the Backwoods, the one above the farm? No streetlights, no trees in the way. It's the best patch of sky in the valley.^^I've been saving up, and Robin agreed to build a small domed observatory there. She's starting now and says it'll take three days. I'll have the telescope calibrated by the time you visit.^^Come up some clear night after 8pm.^^   -Maru",
+  "order.name": "The Valley Observatory",
+  "order.text": "Maru and I want to build an observatory on the Backwoods ledge. The lens needs quartz, the mount needs gold, and the motor needs power. Help the town fund it and I'll start building right away! -Robin",
+  "order.quartz": "Ship refined quartz for the lens",
+  "order.gold": "Ship gold bars for the mount",
+  "order.battery": "Ship battery packs for the dome motor",
+
+  // ---- riddle letters
+  "mail.wizard.title": "A Fallen Star",
+  "mail.wizard": "Farmer,^^You've read five shapes in the sky. The sixth has always been here: you've held it in your hand without knowing.^^\"A fruit fell from the sky and never grew a tree. Where the old master stands waiting in the hidden wood, look for it after dark.\"^^Go at night. The stars don't answer to daylight.^^   -M. Rasmodius",
+  "mail.oldfarmer.title": "(no name)",
+  "mail.oldfarmer": "The paper is old and soft at the folds. The handwriting is familiar, though you can't quite place it.^^\"Where the old man rests and the stone remembers.\"",
+
+  // ---- welcome event (Maru calibrates; gives The Sprout riddle)
+  "event.welcome.1": "@! You made it. Welcome to the observatory!$h",
+  "event.welcome.2": "Give me a second. The telescope's alignment drifted while Robin was hammering the dome shut...",
+  "event.welcome.3": "There! Calibrated. The dials take right ascension and declination, like a map of the sky.$h",
+  "event.welcome.4": "Here's the catch: I won't just hand you coordinates. Try this one. 'I sleep in a paper packet until the spring rain wakes me. Go where I wait to be bought, and look up.'",
+  "event.welcome.5": "Solve it and you'll have your first coordinates. Your journal's on the desk, and the star-chart board is by the wall. Good luck!$h",
+
+  // ---- finale (roof)
+  "event.finale.1": "@, look! Every page of the journal is filled.$h",
+  "event.finale.2": "Seven shapes. Then it's time you saw them all at once. Come. The roof.",
+  "event.finale.3": "Each one was a promise. The Sprout to the first farmers, the Junimo to the forest, and the Old Farmer to you.",
+  "event.finale.4": "I always thought stars were just physics. Fusion, distance, light. They're still that... but tonight they feel like neighbors.$l",
+  "event.finale.5": "The Stardrop sits at the center. Yoba's shrine has faced it since before the valley had a name. Now you know why.",
+  "event.finale.6": "Same time next clear night?$h",
+
+  // ---- lore & hints
+  "maru.fri": "The observatory's lens is the best thing I've ever helped build. If a riddle has you stuck, write down every word. Places hide in riddles.",
+  "maru.tue": "Clint swears there's something scratched into the rock down around floor 40 of the mines. He says it 'looks like math.' I need to see it.",
+  "wizard.mon": "The Junimos didn't come from the forest. The forest is just where they landed.",
+  "wizard.thu": "Have you looked at Yoba's shrine closely? Its face isn't turned toward the town. It's turned toward the sky.",
+  "wizard.sat.stardrop": "Now you know where the Stardrops come from. Eat them gratefully. Each one was a star's last wish."
+}

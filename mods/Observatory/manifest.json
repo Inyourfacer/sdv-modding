@@ -1,0 +1,10 @@
+{
+  "Name": "Observatory",
+  "Author": "Inyourfacer",
+  "Version": "1.0.0",
+  "Description": "A domed observatory in the Backwoods: solve riddles, aim the telescope, connect constellations for permanent perks.",
+  "UniqueID": "Inyourfacer.Observatory",
+  "EntryDll": "Observatory.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}

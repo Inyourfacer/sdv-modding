@@ -1,0 +1,43 @@
+{
+  "Changes": [
+    // ---- interior + roof
+    { "Action": "Load", "Target": "Maps/{{Obs}}_Observatory", "FromFile": "assets/maps/Observatory.tmx" },
+    { "Action": "Load", "Target": "Maps/{{Obs}}_ObservatoryRoof", "FromFile": "assets/maps/ObservatoryRoof.tmx" },
+    {
+      "Action": "EditData",
+      "Target": "Data/Locations",
+      "Entries": {
+        "{{Obs}}_Observatory": {
+          "DisplayName": "{{i18n:location.observatory}}",
+          "DefaultArrivalTile": { "X": 6, "Y": 9 },
+          "ExcludeFromNpcPathfinding": true,
+          "CreateOnLoad": { "MapPath": "Maps/{{Obs}}_Observatory", "AlwaysActive": false }
+        },
+        "{{Obs}}_ObservatoryRoof": {
+          "DisplayName": "{{i18n:location.roof}}",
+          "DefaultArrivalTile": { "X": 6, "Y": 6 },
+          "ExcludeFromNpcPathfinding": true,
+          "CreateOnLoad": { "MapPath": "Maps/{{Obs}}_ObservatoryRoof", "AlwaysActive": false }
+        }
+      }
+    },
+    // exit: walking off the bottom of the interior returns to just below the exterior door
+    {
+      "Action": "EditMap",
+      "Target": "Maps/{{Obs}}_Observatory",
+      "MapProperties": { "Warp": "6 11 Backwoods {{DoorX}} {{DoorY}}" }
+    },
+
+    // ---- exterior on the Backwoods ledge, once Robin has finished building (flag set by the C# mod on the host)
+    {
+      "LogName": "Observatory exterior",
+      "Action": "EditMap",
+      "Target": "Maps/Backwoods",
+      "FromFile": "assets/maps/ObservatoryExterior.tmx",
+      "ToArea": { "X": "{{ExteriorX}}", "Y": "{{ExteriorY}}", "Width": 5, "Height": 6 },
+      "PatchMode": "Overlay",
+      "When": { "HasFlag:hostPlayer |contains={{Obs}}_Built": "true" },
+      "Update": "OnLocationChange"
+    }
+  ]
+}

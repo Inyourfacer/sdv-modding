@@ -1,0 +1,35 @@
+{
+  // Extra pages appended to existing day-of-week lines once the observatory is built.
+  // Append creates the key if the NPC doesn't have it; check with `patch export Characters/Dialogue/Maru`.
+  "Changes": [
+    {
+      "LogName": "Maru observatory lines",
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/Maru",
+      "When": { "HasFlag:hostPlayer |contains={{Obs}}_Built": "true" },
+      "TextOperations": [
+        { "Operation": "Append", "Target": [ "Entries", "Fri" ], "Value": "{{i18n:maru.fri}}", "Delimiter": "#$e#" },
+        { "Operation": "Append", "Target": [ "Entries", "Tue" ], "Value": "{{i18n:maru.tue}}", "Delimiter": "#$e#" }
+      ]
+    },
+    {
+      "LogName": "Wizard lore lines",
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/Wizard",
+      "When": { "HasFlag:hostPlayer |contains={{Obs}}_Built": "true" },
+      "TextOperations": [
+        { "Operation": "Append", "Target": [ "Entries", "Mon" ], "Value": "{{i18n:wizard.mon}}", "Delimiter": "#$e#" },
+        { "Operation": "Append", "Target": [ "Entries", "Thu" ], "Value": "{{i18n:wizard.thu}}", "Delimiter": "#$e#" }
+      ]
+    },
+    {
+      "LogName": "Wizard Stardrop lore",
+      "Action": "EditData",
+      "Target": "Characters/Dialogue/Wizard",
+      "When": { "HasFlag |contains={{Obs}}_Done_Stardrop": "true" },
+      "TextOperations": [
+        { "Operation": "Append", "Target": [ "Entries", "Sat" ], "Value": "{{i18n:wizard.sat.stardrop}}", "Delimiter": "#$e#" }
+      ]
+    }
+  ]
+}

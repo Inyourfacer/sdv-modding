@@ -1,0 +1,53 @@
+{
+  "Changes": [
+    // ---- Path 1: Maru's letter at 6 hearts. Reading it unlocks construction (the C# mod starts Robin's 3-day build).
+    {
+      "Action": "EditData",
+      "Target": "Data/mail",
+      "Entries": {
+        "{{Obs}}_MaruLetter": "{{i18n:mail.maru}}[#]{{i18n:mail.maru.title}}"
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/TriggerActions",
+      "Entries": {
+        "{{Obs}}_SendMaruLetter": {
+          "Id": "{{Obs}}_SendMaruLetter",
+          "Trigger": "DayStarted",
+          "Condition": "PLAYER_HEARTS Current Maru 6, !PLAYER_HAS_MAIL Host {{Obs}}_ConstructionStarted",
+          "Actions": [ "AddMail Current {{Obs}}_MaruLetter now" ]
+        }
+      }
+    },
+
+    // ---- Path 2: a town project on the Special Orders board (the board that opens after the Community Center).
+    // Special orders are drawn at random from the eligible pool each Monday, so it may take a few weeks to appear.
+    {
+      "Action": "EditData",
+      "Target": "Data/SpecialOrders",
+      "Entries": {
+        "{{Obs}}_TownProject": {
+          "Name": "{{i18n:order.name}}",
+          "Requester": "Robin",
+          "Duration": "Month",
+          "Repeatable": false,
+          "RequiredTags": "",
+          "Condition": "!PLAYER_HAS_MAIL Host {{Obs}}_ConstructionStarted",
+          "OrderType": "",
+          "SpecialRule": "",
+          "Text": "{{i18n:order.text}}",
+          "Objectives": [
+            { "Type": "Ship", "Text": "{{i18n:order.quartz}}", "RequiredCount": "20", "Data": { "AcceptableContextTagSets": "id_o_338" } },
+            { "Type": "Ship", "Text": "{{i18n:order.gold}}", "RequiredCount": "10", "Data": { "AcceptableContextTagSets": "id_o_336" } },
+            { "Type": "Ship", "Text": "{{i18n:order.battery}}", "RequiredCount": "5", "Data": { "AcceptableContextTagSets": "id_o_787" } }
+          ],
+          "Rewards": [
+            { "Type": "Mail", "Data": { "MailReceived": "{{Obs}}_TownProjectDone", "NoLetter": "true", "Host": "true" } },
+            { "Type": "Friendship", "Data": { "Amount": "250" } }
+          ]
+        }
+      }
+    }
+  ]
+}

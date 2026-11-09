@@ -1,0 +1,15 @@
+{
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Data/Events/{{Obs}}_Observatory",
+      "Entries": {
+        // First visit: Maru calibrates the telescope and gives the starter riddle (The Sprout).
+        "{{Obs}}_Welcome": "none/6 7/farmer 6 9 0 Maru 6 6 2/skippable/pause 500/speak Maru \"{{i18n:event.welcome.1}}\"/move farmer 0 -1 0/pause 300/speak Maru \"{{i18n:event.welcome.2}}\"/faceDirection Maru 0/pause 500/playSound smallSelect/pause 400/playSound smallSelect/pause 600/playSound crystal/emote Maru 32/faceDirection Maru 2/speak Maru \"{{i18n:event.welcome.3}}\"/speak Maru \"{{i18n:event.welcome.4}}\"/action AddMail Current {{Obs}}_Riddle_Sprout received/speak Maru \"{{i18n:event.welcome.5}}\"/end",
+
+        // Every constellation charted, at night: Maru and the Wizard on the roof.
+        "{{Obs}}_Finale/t 2000 2600/G PLAYER_HAS_MAIL Current {{Obs}}_Done_Sprout, PLAYER_HAS_MAIL Current {{Obs}}_Done_Angler, PLAYER_HAS_MAIL Current {{Obs}}_Done_Pickaxe, PLAYER_HAS_MAIL Current {{Obs}}_Done_Hearth, PLAYER_HAS_MAIL Current {{Obs}}_Done_Junimo, PLAYER_HAS_MAIL Current {{Obs}}_Done_Stardrop, PLAYER_HAS_MAIL Current {{Obs}}_Done_OldFarmer": "none/6 7/farmer 6 9 0 Maru 5 6 2 Wizard 7 6 2/skippable/pause 600/speak Maru \"{{i18n:event.finale.1}}\"/speak Wizard \"{{i18n:event.finale.2}}\"/fade/changeLocation {{Obs}}_ObservatoryRoof/viewport 6 5 true/warp farmer 6 6/faceDirection farmer 0/warp Maru 5 6/faceDirection Maru 0/warp Wizard 7 6/faceDirection Wizard 0/fade unfade/pause 1500/speak Wizard \"{{i18n:event.finale.3}}\"/speak Maru \"{{i18n:event.finale.4}}\"/playSound crystal/pause 800/playSound crystal/pause 800/speak Wizard \"{{i18n:event.finale.5}}\"/faceDirection Maru 1/speak Maru \"{{i18n:event.finale.6}}\"/pause 1000/fade/changeLocation {{Obs}}_Observatory/warp farmer 6 9/action AddMail Current {{Obs}}_Finale received/end"
+      }
+    }
+  ]
+}

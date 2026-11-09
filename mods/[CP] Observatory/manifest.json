@@ -1,0 +1,16 @@
+{
+  "Name": "Observatory (Content)",
+  "Author": "Inyourfacer",
+  "Version": "1.0.0",
+  "Description": "A domed observatory in the Backwoods: solve riddles, aim the telescope, connect constellations for permanent perks.",
+  "UniqueID": "Inyourfacer.Observatory.CP",
+  "UpdateKeys": [],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "Inyourfacer.Observatory"
+    }
+  ]
+}

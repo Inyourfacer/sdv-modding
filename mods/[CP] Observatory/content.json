@@ -1,0 +1,19 @@
+{
+  "Format": "2.7.0",
+  "ConfigSchema": {
+    // Top-left tile of the 5x6 observatory exterior on Maps/Backwoods. The door is at (X+2, Y+5).
+    // Verify in game: stand on the ledge, run `debug where`, and make sure the 5x6 area is clear ground.
+    "ExteriorX": { "Default": "25" },
+    "ExteriorY": { "Default": "13" }
+  },
+  "DynamicTokens": [
+    // Shared ID prefix: the C# mod (Inyourfacer.Observatory) owns every flag, location and tile action,
+    // so this pack uses that ID instead of {{ModId}} (which would be Inyourfacer.Observatory.CP).
+    { "Name": "Obs", "Value": "Inyourfacer.Observatory" },
+    { "Name": "DoorX", "Value": "{{Query: {{ExteriorX}} + 2}}" },
+    { "Name": "DoorY", "Value": "{{Query: {{ExteriorY}} + 6}}" }
+  ],
+  "Changes": [
+    { "Action": "Include", "FromFile": "data/locations.json, data/unlock.json, data/riddles.json, data/events.json, data/dialogue.json" }
+  ]
+}

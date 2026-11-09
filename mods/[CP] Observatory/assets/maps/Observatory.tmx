@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="13" height="11" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="100">
+ <properties>
+  <property name="Light" value="6 8 4"/>
+ </properties>
+ <tileset firstgid="1" name="z_Observatory_tiles" tilewidth="16" tileheight="16" tilecount="128" columns="16">
+  <image source="z_Observatory_tiles.png" width="256" height="128"/>
+ </tileset>
+ <layer id="1" name="Back" width="13" height="11">
+  <data encoding="csv">
+2,1,1,1,1,2,1,1,1,1,2,1,1,
+1,1,1,1,2,1,1,1,1,2,1,1,1,
+1,1,1,2,1,1,1,1,2,1,1,1,1,
+1,1,2,1,1,1,1,2,1,1,1,1,2,
+1,2,1,1,1,1,2,1,1,1,1,2,1,
+2,1,1,1,1,2,1,1,1,1,2,1,1,
+1,1,1,1,8,8,8,8,8,2,1,1,1,
+1,1,1,2,8,8,8,8,8,1,1,1,1,
+1,1,2,1,8,8,8,8,8,1,1,1,2,
+1,2,1,1,1,1,2,1,1,1,1,2,1,
+2,1,1,1,1,2,7,1,1,1,2,1,1
+</data>
+ </layer>
+ <layer id="2" name="Buildings" width="13" height="11">
+  <data encoding="csv">
+3,3,3,3,3,3,3,3,3,3,3,3,3,
+4,17,18,4,5,4,4,4,5,4,4,4,4,
+4,33,34,4,4,4,4,4,4,4,4,4,4,
+6,0,0,0,0,0,0,0,0,0,15,16,6,
+6,0,0,0,0,51,52,53,0,0,0,0,6,
+6,0,0,0,0,0,0,0,0,0,0,0,6,
+6,0,0,0,0,0,0,0,0,0,0,0,6,
+6,0,0,0,0,0,0,0,0,0,0,0,6,
+6,0,0,0,0,0,0,0,0,0,0,0,6,
+6,0,0,0,0,0,0,0,0,0,0,0,6,
+6,0,0,0,0,0,0,0,0,0,0,0,6
+</data>
+ </layer>
+ <layer id="3" name="Paths" width="13" height="11">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="4" name="Front" width="13" height="11">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,19,20,21,0,0,0,0,0,
+0,0,0,0,0,35,36,37,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="5" name="AlwaysFront" width="13" height="11">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="6" name="Buildings">
+  <object id="1" name="TileData" x="16" y="32" width="16" height="16">
+   <properties>
+    <property name="Action" value="Inyourfacer.Observatory_StarCharts"/>
+   </properties>
+  </object>
+  <object id="2" name="TileData" x="32" y="32" width="16" height="16">
+   <properties>
+    <property name="Action" value="Inyourfacer.Observatory_StarCharts"/>
+   </properties>
+  </object>
+  <object id="3" name="TileData" x="160" y="48" width="16" height="16">
+   <properties>
+    <property name="Action" value="Inyourfacer.Observatory_Journal"/>
+   </properties>
+  </object>
+  <object id="4" name="TileData" x="176" y="48" width="16" height="16">
+   <properties>
+    <property name="Action" value="Inyourfacer.Observatory_Journal"/>
+   </properties>
+  </object>
+  <object id="5" name="TileData" x="80" y="64" width="16" height="16">
+   <properties>
+    <property name="Action" value="Inyourfacer.Observatory_Telescope"/>
+   </properties>
+  </object>
+  <object id="6" name="TileData" x="96" y="64" width="16" height="16">
+   <properties>
+    <property name="Action" value="Inyourfacer.Observatory_Telescope"/>
+   </properties>
+  </object>
+  <object id="7" name="TileData" x="112" y="64" width="16" height="16">
+   <properties>
+    <property name="Action" value="Inyourfacer.Observatory_Telescope"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

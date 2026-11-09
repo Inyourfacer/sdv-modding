@@ -1,0 +1,33 @@
+{
+  // Riddles that arrive by mail. The mail ID *is* the riddle flag, so reading the letter adds the riddle to the star journal.
+  // Other riddle sources: the Sprout riddle is given in Maru's welcome event (events.json); the Pickaxe and Junimo
+  // riddles are found on entering mines floor 40 / the Community Center (C# data, constellations.json).
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Data/mail",
+      "Entries": {
+        "{{Obs}}_Riddle_Stardrop": "{{i18n:mail.wizard}}[#]{{i18n:mail.wizard.title}}",
+        "{{Obs}}_Riddle_OldFarmer": "{{i18n:mail.oldfarmer}}[#]{{i18n:mail.oldfarmer.title}}"
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/TriggerActions",
+      "Entries": {
+        "{{Obs}}_SendWizardRiddle": {
+          "Id": "{{Obs}}_SendWizardRiddle",
+          "Trigger": "DayStarted",
+          "Condition": "PLAYER_HAS_MAIL Current {{Obs}}_Done_Sprout, PLAYER_HAS_MAIL Current {{Obs}}_Done_Angler, PLAYER_HAS_MAIL Current {{Obs}}_Done_Pickaxe, PLAYER_HAS_MAIL Current {{Obs}}_Done_Hearth, PLAYER_HAS_MAIL Current {{Obs}}_Done_Junimo",
+          "Actions": [ "AddMail Current {{Obs}}_Riddle_Stardrop now" ]
+        },
+        "{{Obs}}_SendOldFarmerRiddle": {
+          "Id": "{{Obs}}_SendOldFarmerRiddle",
+          "Trigger": "DayStarted",
+          "Condition": "PLAYER_HAS_MAIL Current {{Obs}}_Done_Sprout, PLAYER_HAS_MAIL Current {{Obs}}_Done_Angler",
+          "Actions": [ "AddMail Current {{Obs}}_Riddle_OldFarmer now" ]
+        }
+      }
+    }
+  ]
+}
