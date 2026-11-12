@@ -219,3 +219,21 @@ def test_batch_run_end_to_end_writes_candidates_for_every_target(work, mock):
     assert after["status"] == "generated" and len(after["candidates"]) == 2
     seeds = {json.loads((work / "comfy" / "gem" / f"take_{t}" / "jobs.json").read_text(encoding="utf-8"))["seed"] for t in ("a", "b")}
     assert len(seeds) == 2
+
+
+def test_batch_reroll_loop_is_bounded_records_history_and_stops_for_review(work, mock):
+    """The mock always returns a flat red image, which fails QA every time: the loop must re-roll at most max_rounds and then stop."""
+    (work / sdvlib.CONFIG_NAME).write_text(json.dumps({"comfyui": {"checkpoint": "test.safetensors", "url": mock.url}}), encoding="utf-8")
+    proj = {"version": 1, "art_style": {"takes": 1, "max_rounds": 2}, "characters": {},
+            "assets": [{"id": "gem", "spec": "object_icon", "status": "placeholder", "files": [], "prompt": {"positive": "a blue gem"}}]}
+    (work / "sdv-project.json").write_text(json.dumps(proj), encoding="utf-8")
+    p = subprocess.run([sys.executable, str(SCRIPTS / "batch.py"), "run"], cwd=work, capture_output=True, text=True)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert len(mock.prompts) == 3                                  # first generation + 2 re-rolls, then it stops
+    row = json.loads((work / "sdv-project.json").read_text(encoding="utf-8"))["assets"][0]
+    assert [h["round"] for h in row["history"]] == [1, 2] and row["history"][0]["level"] == "FAIL"
+    assert row["status"] == "generated" and row["recommended"] == "take_a"       # never installed, never approved
+    assert (work / "art" / "gem" / "contact.png").exists() and (work / "art" / "gem" / "qa.json").exists()
+    assert "REVIEW NEEDED" in p.stdout and "do not install" in p.stdout
+    seeds = [n["inputs"]["seed"] for pr in mock.prompts.values() for n in pr.values() if n["class_type"] == "KSampler"]
+    assert len(set(seeds)) == 3                                    # every re-roll used a new seed

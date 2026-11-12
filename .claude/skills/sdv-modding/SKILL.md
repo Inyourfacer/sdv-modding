@@ -63,7 +63,7 @@ Every image asset goes through the same pipeline — see `references/asset-pipel
 3. **Post-process** — `scripts/postprocess.py` takes the generated images + `jobs.json`, removes background, downscales to pixel size, palette-reduces, assembles the sheet in the exact layout, and overwrites the placeholder.
 4. **Validate** — `scripts/validate_mod.py <modfolder>`.
 
-For characters use the recipes in `references/art-recipes.md` (style locked → reference approved → portraits/sprites derived from it, several takes, candidates in `art/` not the mod); `scripts/batch.py` runs that for the project's assets and `scripts/style.py` compares and locks the art style. Never install generated art without looking at it and getting the owner's OK.
+For characters use the recipes in `references/art-recipes.md` (style locked → reference approved → portraits/sprites derived from it, several takes, candidates in `art/` not the mod); `scripts/batch.py` runs that for the project's assets and `scripts/style.py` compares and locks the art style. Generated art goes through `batch.py run` (QA + bounded re-rolls + contact sheet), then you open `art/<id>/contact.png` and look at it, then the owner chooses (`batch.py approve --owner-approved`), then `batch.py install`. Never call art good without having opened the image; never install or overwrite without the owner's OK (see `references/asset-pipeline.md`, section 3b).
 
 Never hand-wave dimensions: always pull from `assets/asset_specs.json`; if a spec says `verify`, unpack the game content (StardewXnbHack) and measure the vanilla file first.
 
