@@ -16,8 +16,9 @@ Target: **Stardew Valley 1.6.x, SMAPI 4.x, .NET 6, Windows**. All paths, IDs and
 
 ## Setup (first use in a project)
 
+0. Run `python "${CLAUDE_SKILL_DIR}/scripts/doctor.py"` to see what is installed (game, SMAPI, frameworks, ComfyUI, models, tools). `--write-config` fills empty values in the config. It never starts programs; ask the owner before starting ComfyUI or the game.
 1. Look for `sdv-modding.config.json` in the project root, then in this skill folder. If neither exists, copy `config.example.json` to the project root and ask the user only for values that can't be auto-detected (author name, UniqueID prefix, checkpoint/LoRA file names).
-2. Game path default: `C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley`. Mods folder = `<game>\Mods`. Verify it exists before deploying.
+2. Game path comes from the config or doctor (Steam libraries and registry are searched). Mods folder = `<game>\Mods`. Verify it exists before deploying.
 3. The installed Content Patcher version (read `<Mods>\ContentPatcher\manifest.json`) is the `Format` to use for new packs. Fallback: `2.7.0`.
 
 Python scripts need Pillow + numpy (`pip install pillow numpy`). C# builds need the .NET 6+ SDK. Scripts live in `${CLAUDE_SKILL_DIR}/scripts/` (bare `scripts/x.py` mentions in reference files mean the same path). Run them with the user's project as the working directory so outputs and `sdv-modding.config.json` resolve there.

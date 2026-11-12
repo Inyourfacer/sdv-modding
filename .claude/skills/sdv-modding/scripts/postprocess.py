@@ -198,15 +198,19 @@ def main():
     picks = dict(s.split("=", 1) for s in a.pick)
     out = Path(a.out)
     sheet = Image.new("RGBA", (spec["sheet_w"], spec["sheet_h"]), (0, 0, 0, 0))
+    base_is_real_art = False  # True only when we build on an existing non-placeholder sheet
     if out.exists():
-        old = Image.open(out).convert("RGBA")
+        old_img = Image.open(out)
+        old = old_img.convert("RGBA")
         if old.size == sheet.size:
             sheet = old
+            base_is_real_art = old_img.info.get("sdv_placeholder") != "1"
         else:
             print(f"note: existing {out} is {old.size}, expected {sheet.size}; starting blank")
 
     fw, fh, cols = spec["frame_w"], spec["frame_h"], spec["cols"]
     done, missing = {}, []
+    covered = set()
     for j in jobs:
         if j.get("skip") or j.get("mirror_of"):
             continue
@@ -221,6 +225,7 @@ def main():
             box = ((idx % cols) * fw, (idx // cols) * fh)
             sheet.paste(Image.new("RGBA", (fw, fh), (0, 0, 0, 0)), box)
             sheet.paste(fr, box)
+            covered.add(idx)
         print(f"  {j['id']:<12} <- {src}")
     for j in jobs:
         m = j.get("mirror_of")
@@ -230,13 +235,17 @@ def main():
                 box = ((idx % cols) * fw, (idx // cols) * fh)
                 sheet.paste(Image.new("RGBA", (fw, fh), (0, 0, 0, 0)), box)
                 sheet.paste(fr, box)
+                covered.add(idx)
             print(f"  {j['id']:<12} <- mirror of {m}")
 
     out.parent.mkdir(parents=True, exist_ok=True)
     from PIL.PngImagePlugin import PngInfo
     meta = PngInfo()
-    if missing:  # still partly placeholder -> validate_mod.py keeps flagging it
+    uncovered = [i for i in range(cols * spec["rows"]) if i not in covered]
+    if uncovered and not base_is_real_art:  # frames still placeholder/blank -> validate_mod.py keeps flagging it
         meta.add_text("sdv_placeholder", "1")
+        if not missing:
+            missing = [f"frame {i}" for i in uncovered]
     sheet.save(out, pnginfo=meta)
     print(f"wrote {out} ({sheet.width}x{sheet.height}, {a.colors} colors/frame)")
     if missing:

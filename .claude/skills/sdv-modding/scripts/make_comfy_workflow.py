@@ -195,6 +195,9 @@ def main():
 
     cfg = load_config(a.config)
     cc = cfg["comfyui"]
+    if not cc.get("checkpoint"):
+        raise SystemExit("No checkpoint set: put comfyui.checkpoint (a file name ComfyUI lists) in sdv-modding.config.json. "
+                         "Run scripts/doctor.py to list the checkpoints found.")
     spec = get_spec(a.spec, a.frame, a.cols, a.rows)
     out = Path(a.out_dir); out.mkdir(parents=True, exist_ok=True)
 
