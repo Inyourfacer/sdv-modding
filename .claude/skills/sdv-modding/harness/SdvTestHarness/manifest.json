@@ -1,0 +1,10 @@
+{
+  "Name": "SDV Test Harness",
+  "Author": "sdv-modding skill",
+  "Version": "1.0.0",
+  "Description": "Loads a dedicated TEST save, runs scripted steps from harness-commands.json, writes harness-results.json. Dormant unless that file exists. Never touches other saves.",
+  "UniqueID": "SdvSkill.TestHarness",
+  "EntryDll": "SdvTestHarness.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}

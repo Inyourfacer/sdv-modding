@@ -37,6 +37,7 @@ Decide what the request touches, then read only the matching reference file(s):
 | Objects, big craftables, furniture, crops, fruit trees, recipes, shops, machines, clothing items, weapons | `references/items.md` |
 | Fashion Sense or Alternative Textures packs | `references/fashion-sense-alt-textures.md` |
 | HD NPC sprites (Sprites in Detail) | `references/sprites-in-detail.md` |
+| Testing in game, reading a SMAPI log, "my mod won't load" | `references/testing.md` |
 | Maps, Tiled, locations, warps, farm types, buildings | `references/maps-buildings.md` |
 | Any image asset (placeholder, generation, post-processing) | `references/asset-pipeline.md` + `assets/asset_specs.json` |
 | Characters: portraits, outfits, sprites, reference sheets, style choice, takes | `references/art-recipes.md` |
@@ -73,6 +74,7 @@ python "${CLAUDE_SKILL_DIR}/scripts/validate_mod.py" <modfolder>            # JS
 dotnet build                                          # C#: ModBuildConfig auto-deploys to Mods
 python "${CLAUDE_SKILL_DIR}/scripts/deploy.py" <modfolder> [--zip]          # JSON packs: copy to Mods; --zip makes a release zip
 ```
+Logs: `python "${CLAUDE_SKILL_DIR}/scripts/game.py" log --mods "<Name or UniqueID>"` parses a SMAPI log and says what is wrong with your mods. Real in-game test (starts the game: ask the owner first, `--confirmed-by-owner` only after a yes): `game.py test --confirmed-by-owner --mods "<folder>"`, then open the screenshots; see `references/testing.md`.
 In game: `patch summary <ModId>`, `patch reload <ModId>`, `patch export <Asset>` (Content Patcher console commands). SMAPI log: `%AppData%\StardewValley\ErrorLogs\SMAPI-latest.txt`.
 
 ## Conventions

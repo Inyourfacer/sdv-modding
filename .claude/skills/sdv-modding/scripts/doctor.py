@@ -38,6 +38,7 @@ FRAMEWORKS = {
     "DIGUS.MailFrameworkMod": "Mail Framework Mod",
 }
 COMFY_URL = "http://127.0.0.1:8188"
+APPDATA_STARDROP = Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming"))) / "Stardrop"
 MODEL_EXTS = (".safetensors", ".ckpt", ".pt", ".pth", ".gguf")
 
 
@@ -168,6 +169,16 @@ def detect_game(cfg: dict) -> dict:
             m = re.match(r"(\d+)\.(\d+)", cp)
             if m:
                 r["content_patcher_format"] = f"{m.group(1)}.{m.group(2)}.0"
+    stardrop = APPDATA_STARDROP.exists()
+    r["stardrop"] = stardrop
+    if log.exists():
+        with log.open(encoding="utf-8", errors="ignore") as f:
+            head = "".join(f.readline() for _ in range(12))
+        m = re.search(r"Mods go here: (.+)", head)
+        if m:
+            r["last_mods_path"] = m.group(1).strip()
+        if "custom --mods-path" in head:
+            r["launched_with_custom_mods_path"] = True
     unpacked = None
     for c in (cfg.get("unpacked_content"), game / "Content (unpacked)", game.parent / "Content (unpacked)"):
         if c and Path(c).is_dir():
@@ -299,6 +310,9 @@ def advice(rep: dict) -> list[str]:
         a.append("Stardew Valley not found: set game_path in sdv-modding.config.json.")
     elif not g["smapi_installed"]:
         a.append("SMAPI is not installed in the game folder (smapi.io).")
+    if g.get("stardrop") and g.get("launched_with_custom_mods_path"):
+        a.append(f"The last SMAPI run used a custom mods path ({g.get('last_mods_path')}), probably a Stardrop profile. "
+                 "Copying into <game>/Mods does not change that profile; game.py test builds an isolated mods folder, so it does not depend on either.")
     if g["game_path"] and not g["frameworks"].get("Pathoschild.ContentPatcher", {}).get("version"):
         a.append("Content Patcher is not installed in Mods.")
     if not g.get("unpacked_content"):
