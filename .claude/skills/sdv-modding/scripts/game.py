@@ -32,12 +32,13 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from sdvlib import PROJECT_NAME, find_project, load_config, load_json, load_project, mods_path
+from sdvlib import PROJECT_NAME, find_project, load_config, load_json, load_manifest, load_project, mods_path
 
 HERE = Path(__file__).resolve().parent
 SKILL = HERE.parent
 HARNESS_DIR = SKILL / "harness" / "SdvTestHarness"
 PID_FILE_NAME = ".sdv-game.json"
+CONSOLE_STDIN = False            # set by --console-stdin (experimental: off because a live run showed SMAPI ignores piped input)
 GAME_EXES = ("StardewModdingAPI.exe", "Stardew Valley.exe")
 APPDATA = Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming")))
 LOG_PATH = APPDATA / "StardewValley" / "ErrorLogs" / "SMAPI-latest.txt"
@@ -239,7 +240,7 @@ def stop_game(root: Path, proc: subprocess.Popen | None = None, wait: float = 20
 def read_manifest(folder: Path) -> dict | None:
     mf = folder / "manifest.json"
     try:
-        return load_json(mf) if mf.exists() else None
+        return load_manifest(mf) if mf.exists() else None
     except Exception:
         return None
 
@@ -345,47 +346,76 @@ def check_to_steps(check: dict) -> list[dict]:
 
 
 # ---------------------------------------------------------------- window screenshots (Windows, ctypes + Pillow)
-def window_rect_for_pid(pid: int):
+def _user32():
     import ctypes
-    from ctypes import wintypes
-    user32 = ctypes.windll.user32
+    u = ctypes.windll.user32
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
     except Exception:
         try:
-            user32.SetProcessDPIAware()
+            u.SetProcessDPIAware()
         except Exception:
             pass
-    rects = []
+    return u
+
+
+def find_window(pid: int):
+    """(hwnd, rect) of the largest visible top-level window owned by pid, or None."""
+    import ctypes
+    from ctypes import wintypes
+    user32 = _user32()
+    found = []
 
     @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
     def cb(hwnd, _):
         p = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(p))
-        if p.value == pid and user32.IsWindowVisible(hwnd) and not user32.IsIconic(hwnd):
+        if p.value == pid and user32.IsWindowVisible(hwnd):
             r = wintypes.RECT()
             user32.GetWindowRect(hwnd, ctypes.byref(r))
             if r.right - r.left > 300 and r.bottom - r.top > 200:
-                rects.append((r.left, r.top, r.right, r.bottom))
+                found.append((hwnd, (r.left, r.top, r.right, r.bottom)))
         return True
 
     user32.EnumWindows(cb, 0)
-    return max(rects, key=lambda r: (r[2] - r[0]) * (r[3] - r[1])) if rects else None
+    return max(found, key=lambda f: (f[1][2] - f[1][0]) * (f[1][3] - f[1][1])) if found else None
+
+
+def bring_to_front(hwnd) -> bool:
+    user32 = _user32()
+    if user32.IsIconic(hwnd):
+        user32.ShowWindow(hwnd, 9)                                   # SW_RESTORE
+    user32.keybd_event(0x12, 0, 0, 0)                                # a tapped ALT lets SetForegroundWindow through
+    user32.SetForegroundWindow(hwnd)
+    user32.keybd_event(0x12, 0, 2, 0)
+    time.sleep(0.6)
+    return user32.GetForegroundWindow() == hwnd
 
 
 def take_window_screenshot(pid: int, out: Path) -> tuple[bool, str]:
-    if os.environ.get("SDV_FAKE_SCREENSHOT"):                 # test hook
+    """Grab the game window. Privacy rule: the screen is only copied while the game window itself is the foreground window,
+    checked before AND after the grab; otherwise nothing is kept (a screen grab would show whatever is on top of it)."""
+    if os.environ.get("SDV_FAKE_SCREENSHOT"):                         # test hook
         from PIL import Image
         Image.new("RGB", (64, 48), (30, 90, 50)).save(out)
         return True, str(out)
     try:
         from PIL import ImageGrab
-        rect = window_rect_for_pid(pid)
-        if not rect:
-            return False, "could not find the game window (minimised, or the game's window belongs to another process)"
+        win = find_window(pid)
+        if not win:
+            return False, "could not find the game window (minimised, or owned by another process); nothing was captured"
+        hwnd, rect = win
+        if not bring_to_front(hwnd):
+            return False, "could not bring the game window to the front, so nothing was captured (a screen grab would show other windows)"
+        user32 = _user32()
+        rect = find_window(pid)[1]
         ImageGrab.grab(bbox=rect, all_screens=True).save(out)
+        if user32.GetForegroundWindow() != hwnd:
+            out.unlink(missing_ok=True)
+            return False, "the game window lost focus during the capture; the picture was discarded"
         return True, str(out)
     except Exception as ex:   # noqa: BLE001
+        out.unlink(missing_ok=True)
         return False, f"screenshot failed: {ex}"
 
 
@@ -490,8 +520,9 @@ def cmd_test(a, cfg):
     report["verdict"] = "PASS" if harness_ok and log_ok else "FAIL"
     (report_dir / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"\nverdict: {report['verdict']}  (harness steps ok: {harness_ok}; log clean for your mods: {log_ok})")
-    for s in report.get("steps", []):
-        print(f"  step {s.get('index')} {s.get('type')}: {'ok' if s.get('ok') else 'FAILED ' + str(s.get('error'))}" + (f" - {s.get('info')}" if s.get("info") else ""))
+    for st in report.get("steps", []):
+        st = {k.lower(): v for k, v in st.items()}
+        print(f"  step {st.get('index')} {st.get('type')}: {'ok' if st.get('ok') else 'FAILED ' + str(st.get('error'))}" + (f" - {st.get('info')}" if st.get("info") else ""))
     if rep:
         print_log_report(rep, names)
     shots = sorted((report_dir / "shots").glob("*.png"))
@@ -543,6 +574,10 @@ def answer(proc, req: dict, report_dir: Path) -> tuple[bool, str]:
         name = re.sub(r"[^A-Za-z0-9_.-]+", "_", req.get("name") or f"shot{req['seq']}")
         return take_window_screenshot(proc.pid, report_dir / "shots" / f"{name}.png")
     if req.get("type") == "console":
+        if not CONSOLE_STDIN:
+            return False, ("SMAPI console commands cannot be sent from here: when SMAPI is started by game.py it does not run commands from a piped "
+                           "stdin (verified in a live run: `patch summary` produced no output). Use a 'debug <cmd>' step for game debug commands, "
+                           "read results with `game.py log`, or type the command in the SMAPI window yourself.")
         try:
             proc.stdin.write((req.get("command", "") + "\n").encode("utf-8"))
             proc.stdin.flush()
@@ -591,10 +626,13 @@ def main():
             s.add_argument("--mods", nargs="+", required=True, help="mod folders under test (their required dependencies are copied too)")
             s.add_argument("--check", nargs="*"); s.add_argument("--steps"); s.add_argument("--save"); s.add_argument("--prefix")
             s.add_argument("--timeout", type=int, default=300); s.add_argument("--skip-validate", action="store_true")
+            s.add_argument("--console-stdin", action="store_true", help="experimental: type console steps into SMAPI stdin (did not work in a live run)")
     sub.add_parser("stop")
     a = ap.parse_args()
     cfg = load_config(a.config)
     root = project_root()
+    global CONSOLE_STDIN
+    CONSOLE_STDIN = bool(getattr(a, "console_stdin", False))
 
     if a.cmd == "log":
         f = Path(a.file) if a.file else LOG_PATH

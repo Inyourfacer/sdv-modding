@@ -148,7 +148,7 @@ def report_of(work):
 @pytest.mark.skipif(not HAS_DOTNET, reason="needs dotnet to build the harness")
 def test_full_flow_pass_with_screenshot_and_console_handshake(rig):
     work, env, _ = rig
-    p = run_test(rig, "--check", "look")
+    p = run_test(rig, "--check", "look", "--console-stdin")
     assert p.returncode == 0, p.stdout + p.stderr
     rep = report_of(work)
     assert rep["verdict"] == "PASS" and rep["harness_ok"] is True
@@ -193,7 +193,7 @@ def test_failed_step_or_error_in_log_gives_fail(rig):
     bad = tmp / "bad.txt"
     bad.write_text("[10:00:00 INFO  SMAPI] SMAPI 4.5.2 with Stardew Valley 1.6.15 build 1 on Windows\n[10:00:02 ERROR Mine] Failed loading asset 'x'\n", encoding="utf-8")
     env["SDV_GAME_LOG"] = str(bad)
-    p = run_test(rig, "--check", "look")
+    p = run_test(rig, "--check", "look", "--console-stdin")
     rep = report_of(work)
     assert p.returncode == 1 and rep["harness_ok"] is True and rep["log"]["ok_for_mine"] is False and rep["verdict"] == "FAIL"
 
@@ -213,3 +213,39 @@ def test_launch_and_stop_need_confirmation_and_stop_without_game_is_harmless(tmp
     assert run("launch").returncode != 0
     p = run("stop")
     assert p.returncode == 0 and "no game of ours" in p.stdout
+
+
+def test_manifest_keys_are_case_insensitive_like_smapi(tmp_path):
+    d = tmp_path / "ConsoleCommands"
+    d.mkdir()
+    (d / "manifest.json").write_text(json.dumps({"name": "Console Commands", "UniqueId": "SMAPI.ConsoleCommands", "version": "4.5.2",
+                                                 "Author": "SMAPI", "EntryDll": "x.dll", "dependencies": [{"UniqueId": "A.B", "isrequired": False}]}), encoding="utf-8")
+    man = sdvlib.load_manifest(d / "manifest.json")
+    assert man["UniqueID"] == "SMAPI.ConsoleCommands" and man["Name"] == "Console Commands"
+    assert man["Dependencies"] == [{"UniqueID": "A.B", "IsRequired": False}]
+    assert "smapi.consolecommands" in game.find_mods_by_id([tmp_path])
+    r = subprocess.run([sys.executable, str(SCRIPTS / "validate_mod.py"), str(d)], capture_output=True, text=True)
+    assert "missing UniqueID" not in r.stdout
+
+
+@pytest.mark.skipif(not HAS_DOTNET, reason="needs dotnet to build the harness")
+def test_console_step_fails_honestly_by_default(rig):
+    """A live run showed SMAPI ignores piped stdin, so a console step must NOT report success unless --console-stdin is given."""
+    work = rig[0]
+    p = run_test(rig, "--check", "look")
+    rep = report_of(work)
+    console = next(st for st in rep["steps"] if st["type"] == "console")
+    assert console["ok"] is False and "cannot be sent" in console["error"]
+    assert rep["verdict"] == "FAIL" and p.returncode == 1
+
+
+def test_screenshot_refuses_when_the_game_window_is_not_in_front(monkeypatch, tmp_path):
+    """Privacy: never keep a screen grab unless the game window itself is the foreground window."""
+    monkeypatch.delenv("SDV_FAKE_SCREENSHOT", raising=False)
+    monkeypatch.setattr(game, "find_window", lambda pid: (111, (0, 0, 800, 600)))
+    monkeypatch.setattr(game, "bring_to_front", lambda hwnd: False)
+    ok, msg = game.take_window_screenshot(1234, tmp_path / "x.png")
+    assert ok is False and "nothing was captured" in msg and not (tmp_path / "x.png").exists()
+    monkeypatch.setattr(game, "find_window", lambda pid: None)
+    ok, msg = game.take_window_screenshot(1234, tmp_path / "y.png")
+    assert ok is False and not (tmp_path / "y.png").exists()

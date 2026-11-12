@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -39,11 +40,11 @@ internal sealed class ModEntry : Mod
 
     private sealed class Script
     {
-        public string Save { get; set; } = "";
-        public string SavePrefix { get; set; } = SavePolicy.DefaultPrefix;
-        public int TimeoutSeconds { get; set; } = 300;
-        public bool ExitWhenDone { get; set; }
-        public List<Step> Steps { get; set; } = new();
+        [JsonPropertyName("save")] public string Save { get; set; } = "";
+        [JsonPropertyName("save_prefix")] public string SavePrefix { get; set; } = SavePolicy.DefaultPrefix;
+        [JsonPropertyName("timeout_seconds")] public int TimeoutSeconds { get; set; } = 300;
+        [JsonPropertyName("exit_when_done")] public bool ExitWhenDone { get; set; }
+        [JsonPropertyName("steps")] public List<Step> Steps { get; set; } = new();
     }
 
     private sealed class StepResult
@@ -55,7 +56,7 @@ internal sealed class ModEntry : Mod
         public string? Info { get; set; }
     }
 
-    private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true, WriteIndented = true, ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
+    private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true, ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 
     private Phase phase = Phase.Dormant;
     private Script script = new();

@@ -24,7 +24,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from sdvlib import PROJECT_NAME, find_project, load_config, load_json, load_project, new_project, save_project
+from sdvlib import PROJECT_NAME, find_project, load_config, load_json, load_manifest, load_project, new_project, save_project
 
 SKIP_DIRS = {".git", "bin", "obj", "node_modules", "__pycache__", "runs", "releases", "art-source", "backups"}
 PACKS = {"pathoschild.contentpatcher": "cp", "platonymous.portraiture": "portraiture", "peacefulend.fashionsense": "fs",
@@ -132,7 +132,7 @@ def sync(root: Path, prefix: str | None, existing: dict | None):
 
     for mod in find_mod_folders(root):
         try:
-            man = load_json(mod / "manifest.json")
+            man = load_manifest(mod / "manifest.json")
         except Exception:
             continue
         rel = mod.relative_to(root).as_posix()

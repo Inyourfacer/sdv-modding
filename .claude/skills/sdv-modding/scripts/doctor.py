@@ -23,7 +23,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-from sdvlib import CONFIG_NAME, DEFAULT_GAME_PATH, dump_json, find_config, load_config, load_json
+from sdvlib import CONFIG_NAME, DEFAULT_GAME_PATH, dump_json, find_config, load_config, load_json, normalize_manifest
 
 FRAMEWORKS = {
     "Pathoschild.ContentPatcher": "Content Patcher",
@@ -60,7 +60,7 @@ def short_walk(root: Path, depth: int):
 
 def read_version(manifest: Path):
     try:
-        m = load_json(manifest)
+        m = normalize_manifest(load_json(manifest))
         return m.get("UniqueID"), m.get("Version"), m.get("Name")
     except Exception:
         return None, None, None

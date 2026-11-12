@@ -203,3 +203,25 @@ def _apply_project_style(cfg: dict) -> None:
         cfg.setdefault("postprocess", {})["palette_png"] = style["palette_png"]
     cfg["_project"] = str(pp)
     cfg["_project_art_style"] = style
+
+
+# ---------------------------------------------------------------- manifests (SMAPI reads keys case-insensitively)
+_MANIFEST_KEYS = ("Name", "Author", "Version", "Description", "UniqueID", "EntryDll", "ContentPackFor", "MinimumApiVersion",
+                  "MinimumGameVersion", "UpdateKeys", "Dependencies", "ExtraFields")
+_CANON = {k.lower(): k for k in _MANIFEST_KEYS}
+_DEP_KEYS = {"uniqueid": "UniqueID", "minimumversion": "MinimumVersion", "isrequired": "IsRequired"}
+
+
+def normalize_manifest(man: dict) -> dict:
+    """Return the manifest with the standard key spellings (e.g. 'UniqueId' -> 'UniqueID'), as SMAPI would read it."""
+    out = {_CANON.get(str(k).lower(), k): v for k, v in man.items()}
+    for key in ("Dependencies",):
+        if isinstance(out.get(key), list):
+            out[key] = [{_DEP_KEYS.get(str(k).lower(), k): v for k, v in d.items()} if isinstance(d, dict) else d for d in out[key]]
+    if isinstance(out.get("ContentPackFor"), dict):
+        out["ContentPackFor"] = {_DEP_KEYS.get(str(k).lower(), k): v for k, v in out["ContentPackFor"].items()}
+    return out
+
+
+def load_manifest(path) -> dict:
+    return normalize_manifest(load_json(path))

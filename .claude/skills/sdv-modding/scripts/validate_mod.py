@@ -19,7 +19,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from sdvlib import load_json
+from sdvlib import load_json, normalize_manifest
 
 KNOWN_PACKS = {
     "pathoschild.contentpatcher": "cp", "platonymous.portraiture": "portraiture",
@@ -302,6 +302,7 @@ def check_mod(root: Path, rep: Report):
     man = read_json(mpath, rep)
     if man is None:
         return
+    man = normalize_manifest(man)
     for f in ("Name", "Author", "Version", "UniqueID"):
         if not man.get(f):
             rep.err("manifest.json", f"missing {f}")
