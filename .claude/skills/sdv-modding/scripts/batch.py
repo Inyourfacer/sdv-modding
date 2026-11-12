@@ -163,15 +163,30 @@ def main():
                 print(f"  take {letter}: reference image(s) in {outs}")
                 continue
             cand = root / "art" / row["id"] / f"take_{letter}.png"
-            pr = sh([sys.executable, str(HERE / "postprocess.py"), "--jobs", str(wf / "jobs.json"), "--images", str(outs),
-                     "--out", str(cand), "--no-preview"], root)
+            targets = [f"vanilla={cand}"]
+            for tg in row.get("targets") or []:
+                kind = tg.get("kind")
+                if kind == "hd":
+                    n = int(tg.get("scale", 8))
+                    targets.append(f"hd:{n}=" + str(cand.with_name(f"{cand.stem}.hd{n}.png")))
+                elif kind == "portraiture":
+                    n = int(tg.get("frame", 256))
+                    targets.append(f"portraiture:{n}=" + str(cand.with_name(f"{cand.stem}.portraiture{n}.png")))
+            pcmd = [sys.executable, str(HERE / "postprocess.py"), "--jobs", str(wf / "jobs.json"), "--images", str(outs), "--no-preview"]
+            for tg in targets:
+                pcmd += ["--target", tg]
+            if row.get("character"):
+                pcmd += ["--character", row["character"]]
+            pr = sh(pcmd, root)
             print(f"  take {letter}: " + ("candidate " + cand.relative_to(root).as_posix() if pr.returncode == 0 else "postprocess failed: " + pr.stderr.strip()[-200:]))
             failures += pr.returncode != 0
         if a.cmd == "run" and plan["recipe"] != "reference_sheet":
-            cands = sorted((root / "art" / row["id"]).glob("take_*.png"))
+            art = root / "art" / row["id"]
+            cands = sorted(art.glob("take_?.png"))          # one vanilla file per take; HD/Portraiture files sit beside it
             if cands:
                 row["status"] = "generated"
                 row["candidates"] = [c.relative_to(root).as_posix() for c in cands]
+                row["candidate_targets"] = {c.stem: [f.relative_to(root).as_posix() for f in sorted(art.glob(c.stem + ".*.png"))] for c in cands}
                 save_project(proj, pp)
     if a.cmd == "run" and gate_done:
         print("\nReference sheets were made. Look at them, pick one, then: python batch.py approve-reference <character> <image>")

@@ -51,14 +51,22 @@ python "${CLAUDE_SKILL_DIR}/scripts/comfy.py" run comfy/<Name>_<key>/*.api.json 
 - The URL defaults to `http://127.0.0.1:8188`; override with `--url` or `comfyui.url` in the config.
 - If the owner would rather queue by hand, the UI-format JSON files still drag into ComfyUI as before.
 
-## 3. Post-process
+## 3. Post-process (one master image -> every target)
 ```
-python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs comfy/<dir>/jobs.json --images "<ComfyUI output>" --out "<mod>/assets/<file>.png"
+python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs comfy/<dir>/jobs.json --images runs/<asset>/<ts>/outputs --out "<mod>/assets/<file>.png"
+python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs jobs.json --images outputs --target vanilla=a.png --target hd:8=a_hd.png --target portraiture:256=a_256.png
 python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs jobs.json --pick happy=path.png ...      # choose specific outputs
 python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --spec object_icon --inputs a.png b.png --out sheet.png   # no jobs.json
 ```
-Per frame: border-connected background removal (sprites/items; `--background keep|remove`, `--bg-tol`) → crop to subject → fit into frame (bottom-anchored for characters/craftables, fill-crop for portraits/tiles) → premultiplied area downscale → hard alpha → median-cut palette (`--colors`, defaults from config by type, or `--palette palette.png` to lock to a shared palette) → optional `--grayscale` (recolorable FS hair) and `--outline`.
-Uncovered frames keep the existing sheet's pixels (the placeholder), and the file stays flagged as a placeholder until every frame is filled. A 4× preview is written beside `jobs.json`.
+Targets: `vanilla` (game size), `hd:N` (vanilla frame x N, full colour; Sprites in Detail, see `sprites-in-detail.md`), `portraiture:F` (square F px frames, full colour; Portraiture, see `portraits.md`). Assets can list their targets in `sdv-project.json` (`"targets": [{"kind":"vanilla"},{"kind":"hd","scale":8}]`); `batch.py` then writes every target beside each take (`take_a.png`, `take_a.hd8.png`).
+
+Vanilla pipeline: border-connected background removal (cut-out specs) -> crop to subject -> **one common scale for the whole sheet** (so a figure keeps its relative size in every facing; `--no-consistent-scale` to fit each frame alone) -> downscale -> hard alpha -> **one palette for the whole sheet** (`--colors N`) -> orphan-pixel and single-pixel-hole cleanup (`--no-cleanup`) -> optional `--outline` / `--grayscale` (recolorable FS hair).
+- Downscale: `--resample auto` uses *dominant colour per output pixel* for cut-out subjects (sprites, items: crisp pixel look) and area averaging for portraits and tiles (faces stay readable). Force with `--resample dominant|box`. Live-tested: dominant is crisper but turns small eyes into dark blobs, so judge sprites at game size before accepting; the HD target is the better route for detailed faces.
+- Locked palettes: `palette.py build --images <approved reference(s)> --colors 24 --out art/<char>/palette.png --lock <char>` records `characters.<char>.palette_png`; then `postprocess.py --character <char>` (or `--palette <png>`) maps every colour to the nearest palette colour (Lab distance), so portraits, outfits and sprites of one character share colours. `--save-palette` writes the palette a sheet used.
+- Frames not covered keep the existing sheet's pixels (the placeholder); the file stays flagged as a placeholder until every frame is filled. A 4x preview is written beside `jobs.json`.
+
+### Fixing one frame without regenerating: `sheet.py`
+`slice`, `assemble`, `mirror-row`, `shift-frame`, `copy-frame`, `preview-anim` (GIF of a row at game-like speed), `diff`. Always writes to `--out`. Example: `sheet.py shift-frame sheet.png --spec character_sprite --frame-index 5 --dy -1 --out fixed.png`, then `sheet.py preview-anim fixed.png --spec character_sprite --row right --out right.gif` and look at it.
 
 ## 4. Validate
 `python "${CLAUDE_SKILL_DIR}/scripts/validate_mod.py" "<mod>"` — dimensions for `Portraits/*` and `Characters/*` targets, FS/AT rect bounds, Portraiture frame shape, placeholders still present.

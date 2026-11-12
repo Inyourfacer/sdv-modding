@@ -36,6 +36,7 @@ Decide what the request touches, then read only the matching reference file(s):
 | New/edited NPCs, dialogue, schedules, gift tastes, events, mail, marriage | `references/npcs-dialogue-events.md` |
 | Objects, big craftables, furniture, crops, fruit trees, recipes, shops, machines, clothing items, weapons | `references/items.md` |
 | Fashion Sense or Alternative Textures packs | `references/fashion-sense-alt-textures.md` |
+| HD NPC sprites (Sprites in Detail) | `references/sprites-in-detail.md` |
 | Maps, Tiled, locations, warps, farm types, buildings | `references/maps-buildings.md` |
 | Any image asset (placeholder, generation, post-processing) | `references/asset-pipeline.md` + `assets/asset_specs.json` |
 | Characters: portraits, outfits, sprites, reference sheets, style choice, takes | `references/art-recipes.md` |
@@ -45,7 +46,7 @@ Decide what the request touches, then read only the matching reference file(s):
 python "${CLAUDE_SKILL_DIR}/scripts/new_mod.py" --type cp --name "My Mod" --out <dir>        # Content Patcher pack
 python "${CLAUDE_SKILL_DIR}/scripts/new_mod.py" --type smapi --name "My Mod" --out <dir>     # C# SMAPI mod
 python "${CLAUDE_SKILL_DIR}/scripts/new_mod.py" --type smapi+cp --name "My Mod" --out <dir>  # C# mod + paired CP pack
-# also: portraiture, fashionsense, alttextures
+# also: portraiture, fashionsense, alttextures, sid (Sprites in Detail)
 ```
 Then fill in content following the reference docs. Prefix every custom ID with `{{ModId}}_` (CP) or `$"{ModManifest.UniqueID}_"` (C#).
 

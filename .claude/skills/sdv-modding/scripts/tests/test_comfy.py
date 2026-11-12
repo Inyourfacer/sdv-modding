@@ -202,3 +202,20 @@ def test_ui_format_workflow_is_refused_with_hint(work, mock):
     ui = next((work / "wf").glob("*neutral.json"))
     p = comfy(work, mock.url, "check", ui, ok=False)
     assert p.returncode != 0 and "api.json" in (p.stderr + p.stdout)
+
+
+def test_batch_run_end_to_end_writes_candidates_for_every_target(work, mock):
+    (work / sdvlib.CONFIG_NAME).write_text(json.dumps({"comfyui": {"checkpoint": "test.safetensors", "url": mock.url}}), encoding="utf-8")
+    proj = {"version": 1, "art_style": {"takes": 2}, "characters": {},
+            "assets": [{"id": "gem", "spec": "object_icon", "status": "placeholder", "files": [], "prompt": {"positive": "a blue gem"},
+                        "targets": [{"kind": "vanilla"}, {"kind": "hd", "scale": 4}]}]}
+    (work / "sdv-project.json").write_text(json.dumps(proj), encoding="utf-8")
+    p = subprocess.run([sys.executable, str(SCRIPTS / "batch.py"), "run", "--takes", "2"], cwd=work, capture_output=True, text=True)
+    assert p.returncode == 0, p.stdout + p.stderr
+    for t in ("a", "b"):
+        assert Image.open(work / "art" / "gem" / f"take_{t}.png").size == (16, 16)
+        assert Image.open(work / "art" / "gem" / f"take_{t}.hd4.png").size == (64, 64)
+    after = json.loads((work / "sdv-project.json").read_text(encoding="utf-8"))["assets"][0]
+    assert after["status"] == "generated" and len(after["candidates"]) == 2
+    seeds = {json.loads((work / "comfy" / "gem" / f"take_{t}" / "jobs.json").read_text(encoding="utf-8"))["seed"] for t in ("a", "b")}
+    assert len(seeds) == 2

@@ -24,6 +24,7 @@ from sdvlib import load_json
 KNOWN_PACKS = {
     "pathoschild.contentpatcher": "cp", "platonymous.portraiture": "portraiture",
     "peacefulend.fashionsense": "fs", "peacefulend.alternativetextures": "at",
+    "bleakcodex.spritesindetail": "sid",
 }
 ACTIONS = {"Load", "EditData", "EditImage", "EditMap", "Include"}
 ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -214,6 +215,63 @@ def check_at(root: Path, rep: Report):
                 rep.err(f"Textures/{item.name}", f"{pngs[0].name} is {im.size}, expected at least {w}x{h * v} for {v} variation(s)")
 
 
+SID_KNOWN = {"Target", "FromFile", "SpriteWidth", "SpriteHeight", "WidthScale", "HeightScale", "SpriteOriginX", "SpriteOriginY", "BreathType"}
+
+
+def check_sid(root: Path, rep: Report):
+    """Sprites in Detail: fields as used by real packs (Target, FromFile, scales, sprite size, origin). Others are only reported."""
+    content = root / "content.json"
+    if not content.exists():
+        rep.err(str(root), "content.json missing"); return
+    data = read_json(content, rep)
+    if data is None:
+        return
+    sprites = data.get("Sprites")
+    if not isinstance(sprites, list):
+        rep.err("content.json", "needs a Sprites list"); return
+    for n, e in enumerate(sprites):
+        where = f"content.json Sprites[{n}]" + (f" ({e.get('Target')})" if isinstance(e, dict) else "")
+        if not isinstance(e, dict):
+            rep.err(where, "entry is not an object"); continue
+        for k in ("Target", "FromFile", "WidthScale", "HeightScale"):
+            if k not in e:
+                rep.err(where, f"missing {k}")
+        for k in e:
+            if k not in SID_KNOWN:
+                rep.info(where, f"field '{k}' is not one the skill knows (not checked)")
+        if e.get("Target") and not str(e["Target"]).lower().startswith("characters/"):
+            rep.warn(where, "Target is not under Characters/ (NPC sheets are Characters/<Name>)")
+        ws, hs = e.get("WidthScale"), e.get("HeightScale")
+        if not all(isinstance(x, (int, float)) and x > 0 for x in (ws, hs) if x is not None):
+            rep.err(where, "WidthScale/HeightScale must be positive numbers")
+        ff = e.get("FromFile")
+        if not ff or "{{" in str(ff):
+            continue
+        fp = root / str(ff)
+        if not fp.exists():
+            rep.err(where, f"FromFile not found: {ff}"); continue
+        try:
+            im = Image.open(fp)
+        except Exception as ex:
+            rep.err(where, f"cannot open {ff}: {ex}"); continue
+        if im.info.get("sdv_placeholder") == "1":
+            rep.warn(where, f"{ff} is still a placeholder")
+        if ws and hs:
+            if im.width % ws or im.height % hs:
+                rep.err(where, f"{ff} is {im.width}x{im.height}: not divisible by the scale ({ws}x{hs}), so it is not a whole vanilla sheet")
+            else:
+                vw, vh = im.width // ws, im.height // hs
+                if vw % 16:
+                    rep.warn(where, f"{ff} / scale is {vw}x{vh}: vanilla NPC sheet width is a multiple of 16 (usually 64)")
+                sw, sh = e.get("SpriteWidth"), e.get("SpriteHeight")
+                if sw and sh and abs(sw * 2 - sh) > 0:
+                    rep.warn(where, f"SpriteWidth:SpriteHeight is {sw}:{sh}; keep 1:2 like the vanilla 16x32 frame")
+                ox, oy = e.get("SpriteOriginX"), e.get("SpriteOriginY")
+                frame_w, frame_h = int(16 * ws), int(32 * hs)  # HD size of a vanilla 16x32 frame
+                if ox is not None and not 0 <= ox < frame_w or oy is not None and not 0 <= oy < frame_h:
+                    rep.err(where, f"SpriteOrigin ({ox},{oy}) is outside the {frame_w}x{frame_h} frame")
+
+
 def check_portraiture(root: Path, rep: Report):
     for p in root.glob("*.png"):
         im = Image.open(p)
@@ -271,6 +329,8 @@ def check_mod(root: Path, rep: Report):
         check_at(root, rep)
     elif kind == "portraiture":
         check_portraiture(root, rep)
+    elif kind == "sid":
+        check_sid(root, rep)
     elif has_entry:
         check_smapi(root, man, rep)
         if (root / "i18n" / "default.json").exists():
