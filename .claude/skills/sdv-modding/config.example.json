@@ -6,6 +6,7 @@
   "mods_path": null,
   "content_patcher_format": null,
   "comfyui": {
+    "url": null,
     "input_dir": null,
     "output_dir": null,
     "checkpoint": null,

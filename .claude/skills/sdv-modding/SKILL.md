@@ -57,7 +57,7 @@ Then fill in content following the reference docs. Prefix every custom ID with `
 ### Assets
 Every image asset goes through the same pipeline — see `references/asset-pipeline.md`:
 1. **Placeholder** — `scripts/make_placeholder.py` writes a spec-exact PNG (correct size, frame grid, labels, silhouettes) straight into the mod's `assets/` folder so the mod loads and is testable immediately.
-2. **Workflow** — `scripts/make_comfy_workflow.py` writes ComfyUI workflow JSON (one per frame/expression/variant) targeting the user's Illustrious checkpoint + LoRAs, plus a `jobs.json` manifest describing how outputs map back to frames. The user loads these in ComfyUI (Stability Matrix) and generates.
+2. **Workflow** — `scripts/make_comfy_workflow.py` writes ComfyUI workflow JSON (one per frame/expression/variant) targeting the user's Illustrious checkpoint + LoRAs, plus a `jobs.json` manifest describing how outputs map back to frames. `scripts/comfy.py run` queues them on the running ComfyUI and downloads the results into `runs/` (ask the owner before starting ComfyUI); the user can still load the JSON by hand.
 3. **Post-process** — `scripts/postprocess.py` takes the generated images + `jobs.json`, removes background, downscales to pixel size, palette-reduces, assembles the sheet in the exact layout, and overwrites the placeholder.
 4. **Validate** — `scripts/validate_mod.py <modfolder>`.
 

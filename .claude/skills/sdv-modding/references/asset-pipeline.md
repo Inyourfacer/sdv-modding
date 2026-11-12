@@ -39,6 +39,18 @@ Consistency strategies (use what the user asks for; offer when they report drift
 
 Honest limits: SD models don't produce clean 16×32 walk cycles. The default sprite flow generates one pose per direction and fills that row; animation frames are usually hand-adjusted afterwards (or generated with a sprite-sheet LoRA the user supplies). Say this once when doing sprites, not repeatedly.
 
+## 2b. Run it: `comfy.py` (ComfyUI API, no manual queueing)
+Add `--api` to `make_comfy_workflow.py` so it also writes `*.api.json`, then:
+```
+python "${CLAUDE_SKILL_DIR}/scripts/comfy.py" status                      # is ComfyUI up? (never starts it)
+python "${CLAUDE_SKILL_DIR}/scripts/comfy.py" run comfy/<Name>_<key>/*.api.json --asset-id <id>
+```
+`run` checks every workflow against the server first (node classes, checkpoint, LoRAs, sampler names; init images are uploaded automatically) and queues nothing if anything is missing, naming it. It then queues, waits, downloads the images into `runs/<asset-id>/<timestamp>/outputs/` with `run.json` and a copy of each workflow, and prints the postprocess command to use (`--images <that outputs folder>`). Raw outputs never go into a mod folder.
+- Other commands: `models` (checkpoints/LoRAs the server sees), `check`, `upload`, `queue --wait`, `fetch`, `interrupt`.
+- Exit code 2 = ComfyUI unreachable. **Ask the owner before starting ComfyUI**; add `--start` only after they said yes in this conversation (needs `comfyui_root` in the config; `doctor.py --write-config` sets it).
+- The URL defaults to `http://127.0.0.1:8188`; override with `--url` or `comfyui.url` in the config.
+- If the owner would rather queue by hand, the UI-format JSON files still drag into ComfyUI as before.
+
 ## 3. Post-process
 ```
 python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs comfy/<dir>/jobs.json --images "<ComfyUI output>" --out "<mod>/assets/<file>.png"
