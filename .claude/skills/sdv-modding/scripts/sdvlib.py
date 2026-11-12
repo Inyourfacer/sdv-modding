@@ -202,3 +202,4 @@ def _apply_project_style(cfg: dict) -> None:
     if style.get("palette_png"):
         cfg.setdefault("postprocess", {})["palette_png"] = style["palette_png"]
     cfg["_project"] = str(pp)
+    cfg["_project_art_style"] = style

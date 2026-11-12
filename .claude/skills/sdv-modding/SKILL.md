@@ -38,6 +38,7 @@ Decide what the request touches, then read only the matching reference file(s):
 | Fashion Sense or Alternative Textures packs | `references/fashion-sense-alt-textures.md` |
 | Maps, Tiled, locations, warps, farm types, buildings | `references/maps-buildings.md` |
 | Any image asset (placeholder, generation, post-processing) | `references/asset-pipeline.md` + `assets/asset_specs.json` |
+| Characters: portraits, outfits, sprites, reference sheets, style choice, takes | `references/art-recipes.md` |
 
 ### New mod
 ```
@@ -60,6 +61,8 @@ Every image asset goes through the same pipeline — see `references/asset-pipel
 2. **Workflow** — `scripts/make_comfy_workflow.py` writes ComfyUI workflow JSON (one per frame/expression/variant) targeting the user's Illustrious checkpoint + LoRAs, plus a `jobs.json` manifest describing how outputs map back to frames. `scripts/comfy.py run` queues them on the running ComfyUI and downloads the results into `runs/` (ask the owner before starting ComfyUI); the user can still load the JSON by hand.
 3. **Post-process** — `scripts/postprocess.py` takes the generated images + `jobs.json`, removes background, downscales to pixel size, palette-reduces, assembles the sheet in the exact layout, and overwrites the placeholder.
 4. **Validate** — `scripts/validate_mod.py <modfolder>`.
+
+For characters use the recipes in `references/art-recipes.md` (style locked → reference approved → portraits/sprites derived from it, several takes, candidates in `art/` not the mod); `scripts/batch.py` runs that for the project's assets and `scripts/style.py` compares and locks the art style. Never install generated art without looking at it and getting the owner's OK.
 
 Never hand-wave dimensions: always pull from `assets/asset_specs.json`; if a spec says `verify`, unpack the game content (StardewXnbHack) and measure the vanilla file first.
 
