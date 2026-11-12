@@ -80,6 +80,7 @@ def load_config(path: str | None = None) -> dict:
         else:
             merged[k] = v
     merged["_path"] = str(cfg_path) if cfg_path else None
+    _apply_project_style(merged)
     return merged
 
 
@@ -144,3 +145,60 @@ def slug(text: str) -> str:
 
 def safe_name(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", text).strip("_") or "asset"
+
+
+# ---------------------------------------------------------------- project file (sdv-project.json)
+PROJECT_NAME = "sdv-project.json"
+PROJECT_VERSION = 1
+
+
+def find_project(start: Path | None = None) -> Path | None:
+    p = (start or Path.cwd()).resolve()
+    for d in [p, *p.parents]:
+        c = d / PROJECT_NAME
+        if c.exists():
+            return c
+    return None
+
+
+def new_project() -> dict:
+    return {"version": PROJECT_VERSION, "id_prefix": None, "mods": [], "ids": {}, "art_style": {},
+            "characters": {}, "assets": [], "test": {}}
+
+
+def load_project(path: str | Path | None = None) -> dict | None:
+    p = Path(path) if path else find_project()
+    if not p or not p.exists():
+        return None
+    data = json.loads(p.read_text(encoding="utf-8-sig"))
+    base = new_project()
+    base.update(data)
+    base["_path"] = str(p)
+    return base
+
+
+def save_project(proj: dict, path: str | Path) -> None:
+    out = {k: v for k, v in proj.items() if not k.startswith("_")}
+    dump_json(out, path)
+
+
+STYLE_KEYS = ("checkpoint", "loras", "quality_prefix", "negative", "style_suffix", "sampler", "scheduler", "steps", "cfg",
+              "clip_skip", "img2img_denoise", "asset_type_loras")
+
+
+def _apply_project_style(cfg: dict) -> None:
+    """A locked art_style in sdv-project.json overrides the machine config's comfyui defaults for this project."""
+    pp = find_project()
+    if not pp:
+        return
+    try:
+        style = json.loads(pp.read_text(encoding="utf-8-sig")).get("art_style") or {}
+    except Exception:
+        return
+    cc = cfg.setdefault("comfyui", {})
+    for k in STYLE_KEYS:
+        if style.get(k) not in (None, "", []):
+            cc[k] = style[k]
+    if style.get("palette_png"):
+        cfg.setdefault("postprocess", {})["palette_png"] = style["palette_png"]
+    cfg["_project"] = str(pp)

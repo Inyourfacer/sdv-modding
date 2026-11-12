@@ -201,3 +201,83 @@ def test_workflow_refuses_without_checkpoint(tmp_path):
     p = run("make_comfy_workflow.py", "--spec", "portrait", "--name", "X", "--subject", "a", "--out-dir", tmp_path / "o",
             cwd=tmp_path, ok=False)
     assert p.returncode != 0 and "checkpoint" in (p.stderr + p.stdout)
+
+
+# ------------------------------------------------------------------ project file
+def make_project_mod(work: Path):
+    run("new_mod.py", "--type", "cp", "--name", "Proj", "--author", "Tester", "--out", work / "root", cwd=work)
+    mod = work / "root" / "[CP] Proj"
+    (mod / "data").mkdir(exist_ok=True)
+    (mod / "data" / "npc.json").write_text(json.dumps({"Changes": [
+        {"Action": "EditData", "Target": "Data/Characters", "Entries": {"{{ModId}}_Mira": {}}},
+        {"Action": "EditData", "Target": "Data/Objects", "Entries": {"{{ModId}}_Gem": {}, "BareName": {}}},
+        {"Action": "EditData", "Target": "Data/Events/Town", "Entries": {"{{ModId}}_Intro/f x 500": "end"}},
+        {"Action": "Load", "Target": "Portraits/{{ModId}}_Mira", "FromFile": "assets/Mira.png"},
+    ]}), encoding="utf-8")
+    (mod / "content.json").write_text(json.dumps({"Format": "2.7.0", "Changes": [
+        {"Action": "Include", "FromFile": "data/npc.json"}]}), encoding="utf-8")
+    run("make_placeholder.py", "--spec", "portrait", "--out", mod / "assets" / "Mira.png", cwd=work)
+    return mod
+
+
+def test_project_sync_status_ids(work):
+    make_project_mod(work)
+    root = work / "root"
+    run("project.py", "sync", cwd=root)
+    proj = json.loads((root / "sdv-project.json").read_text(encoding="utf-8"))
+    assert proj["id_prefix"] == "Tester"
+    assert proj["ids"]["Tester.Proj_Mira"]["kind"] == "npc"
+    assert proj["ids"]["Tester.Proj_Intro"]["kind"] == "event"
+    assert "BareName" not in proj["ids"]  # unprefixed vanilla-style keys are not custom ids
+    a = proj["assets"][0]
+    assert a["spec"] == "portrait" and a["status"] == "placeholder" and a["size"] == [128, 192]
+    p = run("project.py", "status", "--json", cwd=root)
+    assert json.loads(p.stdout)["by_status"] == {"placeholder": 1}
+    assert run("project.py", "ids", "check", cwd=root).returncode == 0
+
+
+def test_project_sync_is_nondestructive_and_tracks_real_art(work):
+    mod = make_project_mod(work)
+    root = work / "root"
+    run("project.py", "sync", cwd=root)
+    pj = root / "sdv-project.json"
+    proj = json.loads(pj.read_text(encoding="utf-8"))
+    proj["characters"]["x"] = {"subject": "keep me"}
+    proj["assets"][0]["notes"] = "my note"
+    pj.write_text(json.dumps(proj), encoding="utf-8")
+    Image.new("RGBA", (128, 192), (9, 9, 9, 255)).save(mod / "assets" / "Mira.png")  # real art replaces placeholder
+    run("project.py", "sync", cwd=root)
+    after = json.loads(pj.read_text(encoding="utf-8"))
+    assert after["characters"]["x"]["subject"] == "keep me"
+    assert after["assets"][0]["notes"] == "my note"
+    assert after["assets"][0]["status"] == "installed"
+
+
+def test_project_csv_roundtrip(work):
+    make_project_mod(work)
+    root = work / "root"
+    run("project.py", "sync", cwd=root)
+    (root / "manifest.csv").write_text(
+        "id,category,positive,negative,gen_width,gen_height,transparent_bg,art_source,character\n"
+        "salt_portrait,portrait,\"1girl, salt\",bad,1024,1024,no,art/salt.png,Salt\n", encoding="utf-8")
+    run("project.py", "import-csv", "manifest.csv", cwd=root)
+    proj = json.loads((root / "sdv-project.json").read_text(encoding="utf-8"))
+    row = next(a for a in proj["assets"] if a["id"] == "salt_portrait")
+    assert row["spec"] == "portrait" and row["gen_size"] == [1024, 1024] and row["prompt"]["positive"] == "1girl, salt"
+    run("project.py", "export-csv", "out.csv", cwd=root)
+    assert "salt_portrait" in (root / "out.csv").read_text(encoding="utf-8")
+
+
+def test_workflow_uses_project_character_and_style(work):
+    proj = {"version": 1, "art_style": {"checkpoint": "locked.safetensors", "steps": 11},
+            "characters": {"Mira": {"subject": "1girl, teal hair", "outfits": {"beach": "bikini"}, "seed": 424242,
+                                    "loras": [{"name": "mira.safetensors", "strength_model": 0.7}]}}}
+    (work / "sdv-project.json").write_text(json.dumps(proj), encoding="utf-8")
+    out = work / "wf"
+    run("make_comfy_workflow.py", "--spec", "portrait", "--name", "Mira", "--character", "Mira", "--outfit", "beach",
+        "--out-dir", out, cwd=work)
+    jobs = json.loads((out / "jobs.json").read_text(encoding="utf-8"))
+    assert jobs["seed"] == 424242
+    assert jobs["checkpoint"] == "locked.safetensors"
+    assert any(l["name"] == "mira.safetensors" for l in jobs["loras"])
+    assert "teal hair, bikini" in jobs["jobs"][0]["prompt"]

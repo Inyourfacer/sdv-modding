@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "sdv-project.json",
+  "description": "Per-project memory for the sdv-modding skill. Machine paths belong in sdv-modding.config.json, not here.",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "version": { "const": 1 },
+    "id_prefix": { "type": ["string", "null"], "description": "Author/prefix for custom IDs, e.g. Me.MyMod" },
+    "mods": { "type": "array", "items": { "type": "object", "required": ["folder", "type"],
+      "properties": { "folder": {"type": "string"}, "type": {"enum": ["cp", "smapi", "portraiture", "fs", "at", "sid", "other"]},
+                      "unique_id": {"type": "string"}, "version": {"type": "string"} } } },
+    "ids": { "type": "object", "description": "Registry of custom IDs: id -> {kind, owner file}", "additionalProperties": {
+      "type": "object", "required": ["kind"], "properties": { "kind": {"type": "string"}, "owner": {"type": "string"} } } },
+    "art_style": { "type": "object", "description": "ComfyUI defaults: checkpoint, loras, quality_prefix, negative, style_suffix, sampler, steps, cfg, palette_png, takes, max_rounds" },
+    "characters": { "type": "object", "additionalProperties": { "type": "object",
+      "properties": { "display_name": {"type": "string"}, "subject": {"type": "string"}, "outfits": {"type": "object"},
+                      "seed": {"type": "integer"}, "loras": {"type": "array"}, "reference_image": {"type": ["string", "null"]},
+                      "palette_png": {"type": ["string", "null"]}, "sprite_frame": {"type": "string"} } } },
+    "assets": { "type": "array", "items": { "type": "object", "required": ["id", "status"],
+      "properties": { "id": {"type": "string"}, "mod": {"type": "string"}, "spec": {"type": ["string", "null"]},
+                      "character": {"type": ["string", "null"]}, "files": {"type": "array", "items": {"type": "string"}},
+                      "targets": {"type": "array"}, "status": {"enum": ["placeholder", "generated", "approved", "installed"]},
+                      "take": {"type": ["string", "null"]}, "prompt": {"type": "object"}, "notes": {"type": "string"} } } },
+    "test": { "type": "object" }
+  }
+}

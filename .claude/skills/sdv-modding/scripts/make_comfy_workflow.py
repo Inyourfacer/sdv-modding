@@ -25,7 +25,7 @@ import random
 import shutil
 from pathlib import Path
 
-from sdvlib import dump_json, get_spec, load_config, safe_name
+from sdvlib import dump_json, get_spec, load_config, load_project, safe_name
 
 DIRECTION_WORDS = {"down": "front", "front": "front", "right": "right side", "left": "left side", "up": "back", "back": "back"}
 EXPRESSION_WORDS = {"neutral": "neutral, calm", "happy": "happy, smiling", "sad": "sad, downcast eyes",
@@ -176,7 +176,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--spec", required=True)
     ap.add_argument("--name", required=True, help="asset/character name used in file prefixes")
-    ap.add_argument("--subject", required=True, help="Danbooru-style tags or description of the subject")
+    ap.add_argument("--subject", help="Danbooru-style tags or description of the subject (or use --character)")
+    ap.add_argument("--character", help="character id in sdv-project.json: supplies subject tags, seed and LoRAs")
+    ap.add_argument("--outfit", help="with --character: outfit key from the character's outfits (tags are appended)")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--frame"); ap.add_argument("--cols", type=int); ap.add_argument("--rows", type=int)
     ap.add_argument("--frames", help="comma list of job ids/labels to emit (others skipped)")
@@ -194,6 +196,18 @@ def main():
     a = ap.parse_args()
 
     cfg = load_config(a.config)
+    ch = {}
+    if a.character:
+        proj = load_project()
+        ch = ((proj or {}).get("characters") or {}).get(a.character)
+        if not ch:
+            raise SystemExit(f"Character '{a.character}' not found in sdv-project.json (python project.py status).")
+        if not a.subject:
+            a.subject = ", ".join(x for x in [ch.get("subject"), (ch.get("outfits") or {}).get(a.outfit) if a.outfit else None] if x)
+        if a.seed is None and ch.get("seed") is not None:
+            a.seed = int(ch["seed"])
+    if not a.subject:
+        raise SystemExit("Give --subject tags or --character <id>.")
     cc = cfg["comfyui"]
     if not cc.get("checkpoint"):
         raise SystemExit("No checkpoint set: put comfyui.checkpoint (a file name ComfyUI lists) in sdv-modding.config.json. "
@@ -202,6 +216,7 @@ def main():
     out = Path(a.out_dir); out.mkdir(parents=True, exist_ok=True)
 
     loras = [] if a.no_config_loras else list(cc.get("loras") or []) + list((cc.get("asset_type_loras") or {}).get(a.spec, []))
+    loras += list(ch.get("loras") or [])
     for s in a.lora:
         parts = s.split(":")
         lo = {"name": parts[0], "strength_model": float(parts[1]) if len(parts) > 1 else 1.0}
