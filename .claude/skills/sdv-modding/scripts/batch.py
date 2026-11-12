@@ -20,6 +20,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from PIL import Image
+
 from sdvlib import PROJECT_NAME, find_project, load_project, save_project
 
 HERE = Path(__file__).resolve().parent
@@ -91,6 +93,9 @@ def main():
         s.add_argument("--ids"); s.add_argument("--character"); s.add_argument("--status"); s.add_argument("--spec")
         s.add_argument("--takes", type=int); s.add_argument("--timeout", type=float, default=1800)
     ar = sub.add_parser("approve-reference"); ar.add_argument("character"); ar.add_argument("image")
+    ar.add_argument("--kind", choices=["body", "portrait"], default="body",
+                    help="body = full figure (sprites, gate); portrait = head-and-shoulders (portrait sheets)")
+    ar.add_argument("--crop", help="left,top,right,bottom as fractions 0-1 or pixels, to cut one figure out of a sheet")
     a = ap.parse_args()
 
     pp = find_project()
@@ -103,12 +108,18 @@ def main():
         ch = (proj["characters"] or {}).get(a.character)
         if ch is None:
             raise SystemExit(f"Unknown character '{a.character}'. Add it under characters in {PROJECT_NAME} first.")
-        dst = root / "art" / re.sub(r"[^A-Za-z0-9_.-]+", "_", a.character) / "reference.png"
+        fname = "reference.png" if a.kind == "body" else "portrait_reference.png"
+        dst = root / "art" / re.sub(r"[^A-Za-z0-9_.-]+", "_", a.character) / fname
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(a.image, dst)
-        ch["reference_image"] = dst.relative_to(root).as_posix()
+        im = Image.open(a.image).convert("RGB")
+        if a.crop:
+            l, t, r, b_ = [float(x) for x in a.crop.split(",")]
+            box = [int(v * im.width) if v <= 1 and i % 2 == 0 else int(v * im.height) if v <= 1 else int(v) for i, v in enumerate((l, t, r, b_))]
+            im = im.crop(tuple(box))
+        im.save(dst)
+        ch["reference_image" if a.kind == "body" else "portrait_reference_image"] = dst.relative_to(root).as_posix()
         save_project(proj, pp)
-        print(f"reference approved for {a.character}: {ch['reference_image']}")
+        print(f"{a.kind} reference approved for {a.character}: {dst.relative_to(root).as_posix()} ({im.width}x{im.height})")
         return
 
     takes = a.takes or int((proj.get("art_style") or {}).get("takes") or 3)
@@ -130,6 +141,8 @@ def main():
         for t in range(n):
             letter = TAKES[t]
             wf = root / "comfy" / row["id"] / f"take_{letter}"
+            for stale in list(wf.glob("*.api.json")) + list(wf.glob("jobs.json")):   # our own generated files only
+                stale.unlink()
             r = sh(build_cmd(proj, row, plan, t, wf), root)
             if r.returncode != 0:
                 print(f"  take {letter}: build failed: {(r.stderr or r.stdout).strip().splitlines()[-1]}"); failures += 1; continue

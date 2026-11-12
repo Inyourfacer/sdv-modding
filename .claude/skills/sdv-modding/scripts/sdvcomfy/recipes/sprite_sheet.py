@@ -1,5 +1,9 @@
 """Sprite sheet by in-context inpainting.
 
+Prompt note (live-tested): do not say "multiple views" or "reference sheet" here; the model then fills the empty half with a
+whole sheet of small figures instead of one sprite. Ask for one full-body figure and push the sheet words into the negative.
+
+
 The approved reference sits in the left half of a wide canvas; only the right half is generated, so the model copies
 face, hair, outfit and colours from what it can see. One generation per facing (down/right/up); left is mirrored from right
 at post-process. Walk-cycle frames are NOT generated here (see references/art-recipes.md for the honest limits).
@@ -34,6 +38,7 @@ def plan_rows(spec: dict, mirror_left: bool, frames: list[str] | None) -> list[d
 def build(ctx: Ctx) -> dict:
     s, spec, pre = ctx.s, ctx.spec, presets()
     framing, style, dirs = pre["_framing"]["sprite"], pre["_framing"]["sprite_style"], pre["_directions"]
+    s.negative = ", ".join(x for x in [s.negative, pre["_framing"]["sprite_negative"]] if x)  # one figure, not a sheet
     g = ApiGraph()
     b = Base(g, s)
     W, H = PANEL_W, PANEL_H
@@ -53,7 +58,8 @@ def build(ctx: Ctx) -> dict:
         if j.get("skip") or j.get("mirror_of"):
             continue
         text = s.positive(framing, s.subject, ctx.outfit_tags, dirs.get(j["label"], j["label"]), style)
-        panel = g.add("ImageCrop", image=b.decode(b.sample(b.encode(text), masked, denoise=1.0)), width=W, height=H, x=W, y=0)
+        neg = b.encode(", ".join(x for x in [s.negative, pre["_direction_negative"].get(j["label"], "")] if x))
+        panel = g.add("ImageCrop", image=b.decode(b.sample(b.encode(text), masked, denoise=1.0, negative=neg)), width=W, height=H, x=W, y=0)
         prefix = f"sdv/{stem}_{j['id']}"
         b.save([panel, 0], prefix)
         j["output_prefix"], j["workflow"] = prefix, f"{stem}.api.json"

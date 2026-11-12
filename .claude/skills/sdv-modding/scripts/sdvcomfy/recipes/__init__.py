@@ -41,11 +41,15 @@ class Ctx:
         fname = f"sdv_{self.name}_ref.png"
         dst = self.out_dir / "input" / fname
         dst.parent.mkdir(parents=True, exist_ok=True)
-        Image.open(self.reference).convert("RGB").save(dst)
+        # fit the whole reference onto a white w x h canvas (never crop away head or feet)
+        im = Image.open(self.reference).convert("RGB")
+        scale = min(w / im.width, h / im.height)
+        fit = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))), Image.LANCZOS)
+        canvas = Image.new("RGB", (w, h), (255, 255, 255))
+        canvas.paste(fit, ((w - fit.width) // 2, (h - fit.height) // 2))
+        canvas.save(dst)
         self.inputs.append(fname)
-        li = g.add("LoadImage", image=fname)
-        sc = g.add("ImageScale", image=[li, 0], upscale_method="lanczos", width=w, height=h, crop="center")
-        return [sc, 0]
+        return [g.add("LoadImage", image=fname), 0]
 
 
 def write_result(ctx: Ctx, graphs: dict[str, ApiGraph], jobs: list[dict], extra: dict | None = None) -> dict:

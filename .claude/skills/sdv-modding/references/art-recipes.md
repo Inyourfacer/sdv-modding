@@ -6,6 +6,7 @@ All recipes use core ComfyUI nodes only, write `*.api.json` workflows plus a `jo
 ## Order of work for a character (enforced by `batch.py`)
 1. **Style locked?** `project.py status` shows `style locked`. If not: `style.py test --candidate "label=checkpoint[+lora:0.8:trigger]" ...` builds the same small test set for each candidate, runs it, and writes `style-test/comparison.png` (game-size results, 4x, next to the owner's unpacked vanilla art when available). Look at the image, show it to the owner, then `style.py lock ...`. Do not pick the style yourself.
 2. **Reference approved?** Add the character to `sdv-project.json` (`characters.<id>`: `subject` tags, optional `seed`, `outfits`, `loras`). With no approved reference, `batch.py run` makes a `reference_sheet` (front/side/back turnaround) and stops for that character. Show the owner; `batch.py approve-reference <character> <image>` copies the pick to `art/<character>/reference.png` and records it.
+   The sheet has many figures; cut one out, do not approve the whole sheet: `batch.py approve-reference <char> <sheet.png> --kind body --crop 0,0.02,0.235,0.99` (full figure, used by sprites) and `--kind portrait --crop <head box>` (head and shoulders, used by portrait sheets). Crops are fractions of the image (or pixels). References are letterboxed onto white, never cropped.
 3. **Everything else derives from the reference**: portraits, outfits, sprites. Same seed, same canonical tags, same LoRAs, always.
 4. **Candidates, not installs.** `batch.py run` writes `art/<asset-id>/take_a|b|c.png` (default 3 takes, seeds `base + 1000*k`) and sets status `generated`. Nothing is written into a mod folder; installing a take is a separate step after the owner approves (and QA, Phase 5).
 
@@ -21,6 +22,12 @@ Add `--preset illustrious|pony` to fill prompt/sampler defaults for a model fami
 
 Run and collect: `comfy.py run comfy/X/*.api.json --asset-id X`, then `postprocess.py --jobs comfy/X/jobs.json --images runs/X/<ts>/outputs --out <candidate>.png`. `batch.py` does both for every selected asset.
 
+## What live testing showed (waiIllustriousSDXL, 18 steps, RX 7900 XTX)
+- `reference_sheet`: a clean turnaround with consistent hair, face, outfit across views (about 15 s).
+- `portrait_sheet`: all six expressions kept the same face, hair and outfit; the technique is sound. At 64x64 the face detail is lost in the downscale (post-process work).
+- `sprite_sheet`: one figure per facing, with hair and outfit recognisably the reference's. It draws the figure small inside the panel; `postprocess.py` crops to content, so that is fine. Outfit colour can still drift between facings, so compare the rows before approving.
+- Prompt lessons: asking for "multiple views / reference sheet" in the sprite panel makes the model fill it with a whole sheet of tiny figures; ask for one full-body figure and put the sheet words in the negative. The back view needs "facing away, back of head" plus a per-facing negative (`face, eyes, looking at viewer`), or it shows a face.
+
 ## Honest limits (say this once when doing sprites, not repeatedly)
 - Diffusion models do not make clean 16x32 walk cycles. `sprite_sheet` produces one pose per facing and copies it across that row's four frames; the walk bob is not generated.
 - Working routes, in order: (1) the HD route: Sprites in Detail with a large clean standing sprite, no walk art needed beyond the offset animation the framework does; (2) hand clean-up of the vanilla sheet in Aseprite when installed; (3) a sprite-sheet LoRA the owner supplies.
@@ -32,6 +39,8 @@ Run and collect: `comfy.py run comfy/X/*.api.json --asset-id X`, then `postproce
 | Expressions look like a different person | Lower `--denoise` to 0.40-0.50; keep seed and tags identical |
 | Expression barely changes | Raise `--denoise` to 0.60-0.70 or strengthen the emotion tags (add `(tag:1.3)`) |
 | Outfit doesn't change enough / changes the face | Outfit stage `ctx.outfit_denoise` is 0.65: raise for the outfit, lower for the face; or use a more specific outfit tag list |
+| Back view shows a face | Already handled by the per-facing negative in `assets/presets.json` (`_direction_negative`); if it still happens, re-roll that row with `--frames up` |
+| Sprite panel full of tiny figures | The prompt must not say "multiple views"/"reference sheet" for sprites (see live testing above) |
 | Sprite facing wrong direction | Regenerate that row: `--recipe sprite_sheet --frames <dir>` with a different seed; put the facing in the subject only if it keeps failing |
 | Sprite doesn't match the reference | Use a cleaner reference (full body, plain background); keep the reference at the same style as the sprite LoRA |
 | Background fringe after post-process | `postprocess.py --bg-tol 60` (more aggressive); or regenerate with `white background` in the framing |

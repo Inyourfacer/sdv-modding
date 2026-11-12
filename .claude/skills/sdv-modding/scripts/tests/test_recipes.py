@@ -251,3 +251,33 @@ def test_comparison_sheet_renders(work):
     out = work / "cmp.png"
     st.build_sheet([("a", paths), ("b", {})], [("vanilla portrait", Image.new("RGBA", (64, 64), (1, 1, 1, 255)))], out)
     assert Image.open(out).width > 800
+
+
+def test_approve_reference_crop_kind_and_letterbox(work):
+    sheet = work / "sheet.png"
+    im = Image.new("RGB", (1536, 1024), (255, 255, 255))
+    im.paste((200, 0, 0), (0, 0, 300, 1000))       # a "front figure" on the left
+    im.save(sheet)
+    project_with_assets(work, with_reference=False)
+    batch(work, "approve-reference", "Mira", sheet, "--kind", "body", "--crop", "0,0,0.2,1")
+    batch(work, "approve-reference", "Mira", sheet, "--kind", "portrait", "--crop", "0,0,0.2,0.25")
+    proj = json.loads((work / "sdv-project.json").read_text(encoding="utf-8"))
+    ch = proj["characters"]["Mira"]
+    assert Image.open(work / ch["reference_image"]).size == (307, 1024)
+    assert Image.open(work / ch["portrait_reference_image"]).size == (307, 256)
+    # portrait recipe uses the head crop, sprite recipe uses the body; both are letterboxed, never cropped
+    make(work, "--recipe", "portrait_sheet", "--name", "Mira", "--character", "Mira", "--out-dir", "p")
+    make(work, "--recipe", "sprite_sheet", "--name", "Mira", "--character", "Mira", "--out-dir", "s")
+    ref_p = Image.open(work / "p" / "input" / "sdv_Mira_ref.png")
+    ref_s = Image.open(work / "s" / "input" / "sdv_Mira_ref.png")
+    assert ref_p.size == (1024, 1024) and ref_s.size == (832, 1216)
+    assert ref_s.getpixel((2, 2)) == (255, 255, 255)           # white padding, figure kept whole
+
+
+def test_batch_rebuild_removes_stale_workflows(work):
+    project_with_assets(work, with_reference=False)
+    batch(work, "plan", "--ids", "mira_portrait", "--takes", "1")            # makes a reference workflow
+    assert list((work / "comfy" / "mira_portrait" / "take_a").glob("*reference*.api.json"))
+    batch(work, "approve-reference", "Mira", "ref.png")
+    batch(work, "plan", "--ids", "mira_portrait", "--takes", "1")
+    assert not list((work / "comfy" / "mira_portrait" / "take_a").glob("*reference*.api.json"))

@@ -245,8 +245,9 @@ def main():
             a.subject = a.subject or ch.get("subject")
         elif not a.subject:
             a.subject = ", ".join(x for x in [ch.get("subject"), outfit] if x)
-        if a.reference is None and ch.get("reference_image") and Path(ch["reference_image"]).exists():
-            a.reference = ch["reference_image"]
+        want = "portrait_reference_image" if a.recipe == "portrait_sheet" else "reference_image"  # portraits start from a head crop
+        if a.reference is None and ch.get(want) and Path(ch[want]).exists():
+            a.reference = ch[want]
         if a.seed is None and ch.get("seed") is not None:
             a.seed = int(ch["seed"])
     if not a.subject:

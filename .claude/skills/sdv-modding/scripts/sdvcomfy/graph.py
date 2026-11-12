@@ -103,8 +103,8 @@ class Base:
     def encode(self, text: str) -> list:
         return [self.g.add("CLIPTextEncode", text=text, clip=self.clip), 0]
 
-    def sample(self, positive: list, latent: list, denoise: float = 1.0, seed: int | None = None) -> list:
-        ks = self.g.add("KSampler", model=self.model, positive=positive, negative=self.neg, latent_image=latent,
+    def sample(self, positive: list, latent: list, denoise: float = 1.0, seed: int | None = None, negative: list | None = None) -> list:
+        ks = self.g.add("KSampler", model=self.model, positive=positive, negative=negative or self.neg, latent_image=latent,
                         seed=self.s.seed if seed is None else seed, steps=self.s.steps, cfg=self.s.cfg,
                         sampler_name=self.s.sampler, scheduler=self.s.scheduler, denoise=round(denoise, 3))
         return [ks, 0]
