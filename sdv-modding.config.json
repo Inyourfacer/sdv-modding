@@ -211,7 +211,7 @@
     },
     "flux": {
       "_doc": "Used for specs listed in asset_type_family (and --family flux). loader: checkpoint = one all-in-one file in models/checkpoints; unet = a diffusion model in models/diffusion_models (or unet) plus clip_l, t5xxl and vae files. LoRAs here must be Flux LoRAs.",
-      "checkpoint": "fulx_dev.safetensors",
+      "checkpoint": "flux_dev.safetensors",
       "loader": "checkpoint",
       "weight_dtype": "default",
       "clip_l": null,

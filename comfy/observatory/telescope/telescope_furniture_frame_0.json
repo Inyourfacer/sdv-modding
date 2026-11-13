@@ -46,7 +46,7 @@
         "Node name for S&R": "CheckpointLoaderSimple"
       },
       "widgets_values": [
-        "fulx_dev.safetensors"
+        "flux_dev.safetensors"
       ]
     },
     {

@@ -10,7 +10,7 @@
   "colors_key": "tile_colors",
   "seed": 7311042,
   "family": "flux",
-  "checkpoint": "fulx_dev.safetensors",
+  "checkpoint": "flux_dev.safetensors",
   "loras": [
     {
       "name": "Stardew_Valley_Style.safetensors",
