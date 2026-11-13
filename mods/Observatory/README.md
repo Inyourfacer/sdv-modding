@@ -38,6 +38,18 @@ Constellations and bundles are data (`Mods/Inyourfacer.Observatory/Constellation
 
 Progress is stored as mail flags per player (`…_Riddle_<id>`, `…_Coords_<id>`, `…_Done_<id>`), so it's per-farmer in multiplayer and readable with CP `HasFlag` and game state queries.
 
+## Validate, test, release (skill 2.0.0, from the repo root; `S=.claude/skills/sdv-modding/scripts`)
+```
+python $S/doctor.py --write-config                                   # game, SMAPI, ComfyUI, models -> config
+python $S/validate_mod.py "mods/[CP] Observatory"                    # deep checks (needs unpacked content for vanilla IDs)
+python $S/tmx.py check "mods/[CP] Observatory/assets/maps/Observatory.tmx"
+cd mods/Observatory && dotnet build                                  # builds + deploys the C# mod
+python $S/deploy.py "mods/[CP] Observatory"                          # copies the content pack to Mods
+python $S/game.py test --confirmed-by-owner --mods mods/Observatory "mods/[CP] Observatory"   # builds the C# mod, isolated Mods folder, test save only
+python $S/release.py mods/Observatory "mods/[CP] Observatory" --version 1.0.0 --note "First release"   # zips + changelog into releases/
+```
+`release.py` stops while the tilesheet is still placeholder art, unless you pass `--allow-placeholders`.
+
 ## Testing (SMAPI console)
 ```
 obs_build                 # finish construction now (host)
@@ -53,7 +65,8 @@ patch summary Inyourfacer.Observatory.CP
 - **Exterior position:** `ExteriorX`/`ExteriorY` default to 25,13 on Backwoods. That's an estimate. Stand on the ledge, run `debug where`, and set the config so the 5×6 area is open ground. The patch uses `Overlay`, so anything already on the Buildings layer there stays.
 - **Not compiled yet.** This environment has no .NET SDK or game DLLs. On first `dotnet build`, fix any API name mismatches. The least certain names are `GameLocation.OnStoneDestroyed` (this one is patched by string name, so if it's missing the perk logs a warning and turns off), `Utility.ForEachBuilding`, and `Game1.IsGreenRainingHere`.
 - **Dialogue keys:** the Maru (`Tue`, `Fri`) and Wizard (`Mon`, `Thu`, `Sat`) appends create the key if the NPC doesn't have it. Check with `patch export Characters/Dialogue/Maru`.
-- **Art:** `[CP]/assets/maps/z_Observatory_tiles.png` is placeholder art (flagged `sdv_placeholder`). Keep its tile layout; regenerate the maps with `python tools/observatory/build_assets.py`.
+- **Art:** `[CP]/assets/maps/z_Observatory_tiles.png` is placeholder art. ComfyUI workflows and steps are in `comfy/observatory/README.md`.
+- **Tile actions** (telescope, board, desk, the exterior door) are `MapTiles` patches in `[CP]/data/locations.json`, not in the `.tmx` files. If you move furniture in a map, move its action tiles there too.
 
 ## Not in v1 yet
 - Night events (meteor shower, camping) as coordinate sources. The hook is ready: any event or dialogue can run `action AddMail Current Inyourfacer.Observatory_Coords_<id> received`.

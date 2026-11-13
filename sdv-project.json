@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "id_prefix": "Inyourfacer.Observatory",
+  "mods": [
+    {
+      "folder": "mods/Observatory",
+      "type": "smapi",
+      "unique_id": "Inyourfacer.Observatory",
+      "version": "1.0.0"
+    },
+    {
+      "folder": "mods/[CP] Observatory",
+      "type": "cp",
+      "unique_id": "Inyourfacer.Observatory.CP",
+      "version": "1.0.0"
+    }
+  ],
+  "ids": {},
+  "art_style": {},
+  "characters": {},
+  "assets": [
+    {
+      "id": "observatory_assets_ui_png",
+      "mod": "mods/Observatory",
+      "spec": null,
+      "character": null,
+      "files": [
+        "mods/Observatory/assets/ui.png"
+      ],
+      "targets": [
+        {
+          "kind": "vanilla"
+        }
+      ],
+      "status": "installed",
+      "take": null,
+      "prompt": {
+        "positive": null,
+        "negative": null
+      },
+      "notes": "",
+      "size": [
+        48,
+        16
+      ]
+    },
+    {
+      "id": "cp_observatory_assets_maps_z_observatory_tiles_png",
+      "mod": "mods/[CP] Observatory",
+      "spec": null,
+      "character": null,
+      "files": [
+        "mods/[CP] Observatory/assets/maps/z_Observatory_tiles.png"
+      ],
+      "targets": [
+        {
+          "kind": "vanilla"
+        }
+      ],
+      "status": "placeholder",
+      "take": null,
+      "prompt": {
+        "positive": null,
+        "negative": null
+      },
+      "notes": "",
+      "size": [
+        256,
+        128
+      ]
+    }
+  ],
+  "test": {}
+}

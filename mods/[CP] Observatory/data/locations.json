@@ -21,11 +21,22 @@
         }
       }
     },
-    // exit: walking off the bottom of the interior returns to just below the exterior door
+    // exit (walking off the bottom of the interior returns to just below the exterior door) and the tile actions
+    // handled by the C# mod: star-chart board, journal desk, telescope
     {
+      "LogName": "Observatory interior warp and tile actions",
       "Action": "EditMap",
       "Target": "Maps/{{Obs}}_Observatory",
-      "MapProperties": { "Warp": "6 11 Backwoods {{DoorX}} {{DoorY}}" }
+      "MapProperties": { "Warp": "6 11 Backwoods {{DoorX}} {{DoorY}}" },
+      "MapTiles": [
+        { "Position": { "X": 1, "Y": 2 }, "Layer": "Buildings", "SetProperties": { "Action": "{{Obs}}_StarCharts" } },
+        { "Position": { "X": 2, "Y": 2 }, "Layer": "Buildings", "SetProperties": { "Action": "{{Obs}}_StarCharts" } },
+        { "Position": { "X": 10, "Y": 3 }, "Layer": "Buildings", "SetProperties": { "Action": "{{Obs}}_Journal" } },
+        { "Position": { "X": 11, "Y": 3 }, "Layer": "Buildings", "SetProperties": { "Action": "{{Obs}}_Journal" } },
+        { "Position": { "X": 5, "Y": 4 }, "Layer": "Buildings", "SetProperties": { "Action": "{{Obs}}_Telescope" } },
+        { "Position": { "X": 6, "Y": 4 }, "Layer": "Buildings", "SetProperties": { "Action": "{{Obs}}_Telescope" } },
+        { "Position": { "X": 7, "Y": 4 }, "Layer": "Buildings", "SetProperties": { "Action": "{{Obs}}_Telescope" } }
+      ]
     },
 
     // ---- exterior on the Backwoods ledge, once Robin has finished building (flag set by the C# mod on the host)
@@ -36,6 +47,16 @@
       "FromFile": "assets/maps/ObservatoryExterior.tmx",
       "ToArea": { "X": "{{ExteriorX}}", "Y": "{{ExteriorY}}", "Width": 5, "Height": 6 },
       "PatchMode": "Overlay",
+      "When": { "HasFlag:hostPlayer |contains={{Obs}}_Built": "true" },
+      "Update": "OnLocationChange"
+    },
+    {
+      "LogName": "Observatory door",
+      "Action": "EditMap",
+      "Target": "Maps/Backwoods",
+      "MapTiles": [
+        { "Position": { "X": "{{DoorX}}", "Y": "{{DoorTileY}}" }, "Layer": "Buildings", "SetProperties": { "Action": "Warp 6 9 {{Obs}}_Observatory" } }
+      ],
       "When": { "HasFlag:hostPlayer |contains={{Obs}}_Built": "true" },
       "Update": "OnLocationChange"
     }

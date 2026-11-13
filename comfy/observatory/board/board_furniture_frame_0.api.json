@@ -50,7 +50,7 @@
   "5": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, pixel art, cork bulletin board with pinned star charts and constellation sketches, wooden frame, red pins, pixel art furniture, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, no humans, simple background, white background",
+      "text": "masterpiece, best quality, amazing quality, very aesthetic, pixel art, cork bulletin board with pinned star charts and constellation sketches, wooden frame, red pins,, pixel art furniture, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, no humans, simple background, white background",
       "clip": [
         "4",
         1
@@ -60,7 +60,7 @@
   "6": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "worst quality, low quality, lowres, bad anatomy, bad hands, jpeg artifacts, blurry, watermark, signature, text, logo, cropped, extra digits, 3d, realistic, photo",
+      "text": "lowres, worst quality, bad quality, bad anatomy, bad hands, jpeg artifacts, signature, watermark, text, cropped, multiple views, out of frame, detailed background, scenery, blurry, 3d, realistic, photo, logo",
       "clip": [
         "4",
         1
@@ -80,7 +80,7 @@
     "inputs": {
       "seed": 7311042,
       "steps": 28,
-      "cfg": 6.0,
+      "cfg": 5.5,
       "sampler_name": "euler_ancestral",
       "scheduler": "normal",
       "denoise": 1.0,

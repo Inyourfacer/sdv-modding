@@ -11,6 +11,7 @@
     // so this pack uses that ID instead of {{ModId}} (which would be Inyourfacer.Observatory.CP).
     { "Name": "Obs", "Value": "Inyourfacer.Observatory" },
     { "Name": "DoorX", "Value": "{{Query: {{ExteriorX}} + 2}}" },
+    { "Name": "DoorTileY", "Value": "{{Query: {{ExteriorY}} + 5}}" },
     { "Name": "DoorY", "Value": "{{Query: {{ExteriorY}} + 6}}" }
   ],
   "Changes": [

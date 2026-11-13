@@ -17,13 +17,20 @@ All pieces share seed `7311042` so the style stays consistent.
 | Floor / wall / rug / roof deck | `floor/` `wall/` `rug/` `deck/` | 16×16 | single tiles |
 
 ## Steps (on your PC, from the repo root)
-1. In ComfyUI (Stability Matrix), drag in `comfy/observatory/<piece>/<piece>_*.json` (not the `.api.json`) and queue it. Change the seed and re-queue until you like the result. Images save to `<ComfyUI output>/sdv/`.
-2. Post-process each piece into its exact pixel size:
+Let `S=.claude/skills/sdv-modding/scripts`.
+
+1. Check the setup: `python $S/doctor.py --write-config` finds the game, SMAPI, ComfyUI and your model files and fills the `null`s in `sdv-modding.config.json`. Then `python $S/comfy.py models` lists the real checkpoint and LoRA names. Fix the config if they differ from the guesses above, and regenerate the workflows (step 5).
+2. Generate. Start ComfyUI, then for each piece:
    ```
-   python .claude/skills/sdv-modding/scripts/postprocess.py --jobs comfy/observatory/dome/jobs.json --images "C:\StabilityMatrix\Data\Packages\ComfyUI\output" --out tools/observatory/art/dome.png
+   python $S/comfy.py run comfy/observatory/dome/*.api.json --asset-id observatory_dome
    ```
-   Same for `telescope`, `board`, `desk`, `floor`, `wall`, `rug`, `deck`. To choose a specific image, use `--pick frame_0=path\to\image.png`.
-3. Rebuild the tilesheet: `python tools/observatory/build_assets.py`. Each piece is pasted into its slot. The sheet stays flagged as placeholder until all 8 pieces exist.
-4. Validate and install: `validate_mod.py "mods/[CP] Observatory"`, then `deploy.py "mods/[CP] Observatory"`.
+   Results land in `runs/observatory_dome/<time>/outputs/`. Or drag the UI-format `.json` (not `.api.json`) into ComfyUI and queue it by hand.
+3. Post-process to the exact pixel size (`--resample dominant` gives crisper pixels):
+   ```
+   python $S/postprocess.py --jobs comfy/observatory/dome/jobs.json --images runs/observatory_dome --resample dominant --out tools/observatory/art/dome.png
+   ```
+   For a matching palette across pieces, add `--palette tools/observatory/art/dome.png` to the later ones.
+4. Rebuild the tilesheet: `python tools/observatory/build_assets.py`. It stays flagged as placeholder until all 8 pieces exist. Check the result with `python $S/tmx.py render "mods/[CP] Observatory/assets/maps/Observatory.tmx" --out obs.png` and look at it.
+5. To regenerate the workflows after a config change, run the `make_comfy_workflow.py` commands from the commit that added this folder (seed `7311042`, `--spec building --frame 80x96` for the dome, `--spec furniture` for the telescope/board/desk, `--spec tilesheet --frame 16x16` for tiles; all with `--cols 1 --rows 1 --api`).
 
 Tiles not listed (wall trim, windows, door mat, sky, railing) keep the hand-drawn pixel art from `build_assets.py`.

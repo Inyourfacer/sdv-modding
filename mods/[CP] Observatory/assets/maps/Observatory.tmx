@@ -81,41 +81,4 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="6" name="Buildings">
-  <object id="1" name="TileData" x="16" y="32" width="16" height="16">
-   <properties>
-    <property name="Action" value="Inyourfacer.Observatory_StarCharts"/>
-   </properties>
-  </object>
-  <object id="2" name="TileData" x="32" y="32" width="16" height="16">
-   <properties>
-    <property name="Action" value="Inyourfacer.Observatory_StarCharts"/>
-   </properties>
-  </object>
-  <object id="3" name="TileData" x="160" y="48" width="16" height="16">
-   <properties>
-    <property name="Action" value="Inyourfacer.Observatory_Journal"/>
-   </properties>
-  </object>
-  <object id="4" name="TileData" x="176" y="48" width="16" height="16">
-   <properties>
-    <property name="Action" value="Inyourfacer.Observatory_Journal"/>
-   </properties>
-  </object>
-  <object id="5" name="TileData" x="80" y="64" width="16" height="16">
-   <properties>
-    <property name="Action" value="Inyourfacer.Observatory_Telescope"/>
-   </properties>
-  </object>
-  <object id="6" name="TileData" x="96" y="64" width="16" height="16">
-   <properties>
-    <property name="Action" value="Inyourfacer.Observatory_Telescope"/>
-   </properties>
-  </object>
-  <object id="7" name="TileData" x="112" y="64" width="16" height="16">
-   <properties>
-    <property name="Action" value="Inyourfacer.Observatory_Telescope"/>
-   </properties>
-  </object>
- </objectgroup>
 </map>

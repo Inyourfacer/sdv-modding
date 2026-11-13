@@ -53,11 +53,4 @@
 0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="6" name="Buildings">
-  <object id="1" name="TileData" x="32" y="80" width="16" height="16">
-   <properties>
-    <property name="Action" value="Warp 6 9 Inyourfacer.Observatory_Observatory"/>
-   </properties>
-  </object>
- </objectgroup>
 </map>

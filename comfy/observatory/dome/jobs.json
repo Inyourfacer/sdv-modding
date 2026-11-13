@@ -23,7 +23,7 @@
       "trigger": "pixel art"
     }
   ],
-  "negative": "worst quality, low quality, lowres, bad anatomy, bad hands, jpeg artifacts, blurry, watermark, signature, text, logo, cropped, extra digits, 3d, realistic, photo",
+  "negative": "lowres, worst quality, bad quality, bad anatomy, bad hands, jpeg artifacts, signature, watermark, text, cropped, multiple views, out of frame, detailed background, scenery, blurry, 3d, realistic, photo, logo",
   "game_asset": "Buildings/{ModId}_<Name> (Data/Buildings Texture)",
   "jobs": [
     {
@@ -34,7 +34,7 @@
       "label": "frame_0",
       "output_prefix": "sdv/dome_building_frame_0",
       "workflow": "dome_building_frame_0.json",
-      "prompt": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, pixel art, small white domed astronomical observatory, round stone walls, white dome with open telescope slit, wooden front door centered, two small round windows, night sky blue accents, farm building exterior, pixel art, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, no humans, simple background, white background"
+      "prompt": "masterpiece, best quality, amazing quality, very aesthetic, pixel art, small white domed astronomical observatory, round stone walls, white dome with open telescope slit, wooden front door centered, two small round windows, night sky blue accents, farm building exterior, pixel art, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, no humans, simple background, white background"
     }
   ]
 }

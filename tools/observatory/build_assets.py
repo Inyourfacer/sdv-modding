@@ -243,13 +243,9 @@ def interior():
             back[y][x] = RUG
     back[10][6] = MAT
 
-    act = {
-        **{(x, 2): {"Action": f"{OBS}_StarCharts"} for x in (1, 2)},
-        **{(x, 3): {"Action": f"{OBS}_Journal"} for x in (10, 11)},
-        **{(x, 4): {"Action": f"{OBS}_Telescope"} for x in (5, 6, 7)},
-    }
-    # Warp back to Backwoods is set by the [CP] pack (it depends on the configurable exterior position).
-    return tmx(w, h, {"Back": back, "Buildings": bld, "Front": front}, props={"Light": "6 8 4"}, tile_props={"Buildings": act})
+    # Tile actions (board, desk, telescope) and the warp back to Backwoods are added by the [CP] pack
+    # (data/locations.json MapTiles / MapProperties), per the skill's rule that tile properties live in patches.
+    return tmx(w, h, {"Back": back, "Buildings": bld, "Front": front}, props={"Light": "6 8 4"})
 
 
 def roof():
@@ -267,7 +263,8 @@ def roof():
         bld[0][x] = bld[1][x] = SKY  # keep the sky rows impassable
     for y in range(3, h):
         bld[y][0] = bld[y][w - 1] = RAIL
-    return tmx(w, h, {"Back": back, "Buildings": bld}, props={"Outdoors": "T"})
+    # exit one tile below the bottom edge, back into the observatory (the finale event normally moves the player itself)
+    return tmx(w, h, {"Back": back, "Buildings": bld}, props={"Outdoors": "T", "Warp": f"6 {h} {OBS}_Observatory 6 9"})
 
 
 def exterior():
@@ -276,9 +273,9 @@ def exterior():
     for r in range(h):
         for c in range(w):
             (front if r < 2 else bld)[r][c] = DOME[r][c]
-    # door at (2,5): walk-in warp to the interior arrival tile
-    act = {(2, 5): {"Action": f"Warp 6 9 {OBS}_Observatory"}}
-    return tmx(w, h, {"Buildings": bld, "Front": front}, tile_props={"Buildings": act})
+    # Back layer left empty on purpose: this is an Overlay patch, so the Backwoods ground shows through.
+    # The door action at (2,5) is added by the [CP] pack as a MapTiles patch on Maps/Backwoods.
+    return tmx(w, h, {"Buildings": bld, "Front": front})
 
 
 # ---------------------------------------------------------------- UI sheet (real art, not placeholder)
