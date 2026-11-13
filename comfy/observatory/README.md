@@ -4,7 +4,7 @@ Every piece here is location/tilesheet art, so all 8 use **Flux**: checkpoint `f
 
 Everything else in your projects stays on WAI Illustrious v17 (`comfyui.checkpoint`): sprites and items with `coropata_pixel` + `pixel-art-xl`, portraits with `jab_illustrious_V1.5`.
 
-**File names to confirm** with `comfy.py models`: `flux_dev.safetensors` and `stardew-valley-style-000012.safetensors` are confirmed. If `flux_dev` turns up under `diffusion_models` instead of `checkpoints`, it's a split model: set `comfyui.flux.loader` to `"unet"` and fill in `clip_l`, `t5xxl` and `vae` (those show up under `text_encoders` and `vaes`). Then regenerate (step 5).
+**Models confirmed:** `flux_dev.safetensors` is an all-in-one Flux file (about 16 GB, text encoders and VAE built in) in Stability Matrix's shared `Data\Models\StableDiffusion` folder, so `comfyui.flux.loader` stays `"checkpoint"`. The LoRA is `stardew-valley-style-000012.safetensors`.
 
 All pieces share seed `7311042` so the style stays consistent.
 
