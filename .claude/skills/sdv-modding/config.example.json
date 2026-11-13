@@ -1,19 +1,17 @@
 {
+  "_doc": "Machine settings. Run scripts/doctor.py --write-config to fill the nulls. Nothing here is a guess: null means 'not detected yet'.",
   "author": "YourName",
   "uniqueid_prefix": "YourName",
-  "game_path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Stardew Valley",
+  "game_path": null,
   "mods_path": null,
   "content_patcher_format": null,
-
   "comfyui": {
-    "stability_matrix_root": "C:\\StabilityMatrix",
-    "input_dir": "C:\\StabilityMatrix\\Data\\Packages\\ComfyUI\\input",
-    "output_dir": "C:\\StabilityMatrix\\Data\\Packages\\ComfyUI\\output",
-    "checkpoint": "illustriousXL_v01.safetensors",
+    "url": null,
+    "input_dir": null,
+    "output_dir": null,
+    "checkpoint": null,
     "clip_skip": 2,
-    "loras": [
-      { "name": "pixel-art-xl.safetensors", "strength_model": 0.8, "strength_clip": 0.8, "trigger": "pixel art" }
-    ],
+    "loras": [],
     "asset_type_loras": {
       "portrait": [],
       "portrait_hd": [],
@@ -30,7 +28,6 @@
     "style_suffix": "stardew valley style, cozy farm game, soft shading, clean outlines",
     "img2img_denoise": 0.6
   },
-
   "postprocess": {
     "portrait_colors": 32,
     "sprite_colors": 16,
@@ -39,5 +36,10 @@
     "outline": false,
     "palette_png": null,
     "background": "auto"
-  }
+  },
+  "unpacked_content": null,
+  "comfyui_root": null,
+  "tiled": null,
+  "aseprite": null,
+  "stardewxnbhack": null
 }

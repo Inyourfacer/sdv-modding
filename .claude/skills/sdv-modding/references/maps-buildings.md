@@ -2,6 +2,16 @@
 
 Editor: Tiled (save as `.tmx`, CSV or base64-uncompressed layers; SDV/xTile reads `.tmx` and `.tbin`). Wiki of record: Modding:Maps, Modding:Location data, Modding:Farm data, Modding:Buildings.
 
+## Tools (no Tiled needed)
+```
+python "${CLAUDE_SKILL_DIR}/scripts/tmx.py" info|check|render|new|set-prop|add-warp|set-tile <map.tmx> ...
+python "${CLAUDE_SKILL_DIR}/scripts/add.py" location --mod "<[CP] folder>" --name Cottage --door "60 70" [--like Trailer --size 12x9]
+```
+`add.py location` writes a starter interior (the tilesheets and floor of a vanilla map you name with `--like`), the `Data/Locations` entry, an `EditMap AddWarps` on the target map and a warp back out, then checks the map. `tmx.py render` makes a PNG so you can look at a map without the game (it reads the game's own tilesheets from the unpacked content); open the image and look at it. `tmx.py check` finds missing layers, tilesheet images that do not exist, tile ids beyond the tilesheets, malformed or unknown-location warps. `validate_mod.py` runs the same checks on every `.tmx` a pack ships and checks `AddWarps` strings. See `tool-setup.md` for Tiled.
+
+Measured from the game's own maps (190 `.tmx` files, all readable by `tmx.py`): Tiled 1.4 files; tilesheets referenced by **asset name without extension** (`townInterior`); CSV layer data; layers `Back`, `Buildings`, `Front`, `AlwaysFront` (bigger maps add `Back2/3`, `Buildings2`, `Paths`); map properties such as `Warp`, `FloorIDs`, `WallIDs`; `Warp` is `x y Location tx ty` groups; an **exit warp sits one tile outside the map edge** (FarmHouse is 12x12 and warps at `3 12`). Some vanilla maps list an older size for a tilesheet than the file on disk (a harmless warning).
+Per-tile properties (`Action`, `TouchAction`, `Passable`, ...) belong in `EditMap` `MapTiles` patches, not in the `.tmx`, so they survive tilesheet changes.
+
 ## Map structure
 - Layers: `Back` (ground), `Buildings` (collision), `Paths` (spawn/path hints), `Front` (draws over player), `AlwaysFront`.
 - Tilesheets: vanilla ones referenced by asset name (`spring_outdoorsTileSheet`, `townInterior`, …) placed next to the .tmx when editing, but not shipped if unchanged. Custom tilesheets: name them `z_{{ModId}}_tiles` so they sort after vanilla and keep indices stable; ship the png beside the .tmx (CP resolves relative paths).

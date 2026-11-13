@@ -1,6 +1,6 @@
 # Asset pipeline: placeholder → ComfyUI → game-ready sheet
 
-Specs live in `assets/asset_specs.json` (keys: `portrait`, `portrait_hd`, `character_sprite`, `object_icon`, `big_craftable`, `crop`, `fruit_tree`, `furniture`, `hat`, `shirt`, `fs_hair`, `fs_accessory`, `alt_texture`, `tilesheet`, `building`). Override per asset with `--frame WxH --cols N --rows N`. If the spec has `"verify": true`, unpack the game first (StardewXnbHack → `Content (unpacked)/`) and match the vanilla layout.
+Specs live in `assets/asset_specs.json` (keys: `portrait`, `portrait_hd`, `character_sprite`, `object_icon`, `big_craftable`, `crop`, `fruit_tree`, `furniture`, `hat`, `shirt`, `fs_hair`, `fs_accessory`, `alt_texture`, `tilesheet`, `building`). Override per asset with `--frame WxH --cols N --rows N`. Each spec's `vanilla_ref` names the vanilla sheet its layout was measured from; `python vanilla.py specs` re-checks every rule against the unpacked game, and `vanilla.py size <asset>` measures any other vanilla image.
 
 ## 1. Placeholder
 ```
@@ -39,14 +39,53 @@ Consistency strategies (use what the user asks for; offer when they report drift
 
 Honest limits: SD models don't produce clean 16×32 walk cycles. The default sprite flow generates one pose per direction and fills that row; animation frames are usually hand-adjusted afterwards (or generated with a sprite-sheet LoRA the user supplies). Say this once when doing sprites, not repeatedly.
 
-## 3. Post-process
+## 2b. Run it: `comfy.py` (ComfyUI API, no manual queueing)
+Add `--api` to `make_comfy_workflow.py` so it also writes `*.api.json`, then:
 ```
-python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs comfy/<dir>/jobs.json --images "<ComfyUI output>" --out "<mod>/assets/<file>.png"
+python "${CLAUDE_SKILL_DIR}/scripts/comfy.py" status                      # is ComfyUI up? (never starts it)
+python "${CLAUDE_SKILL_DIR}/scripts/comfy.py" run comfy/<Name>_<key>/*.api.json --asset-id <id>
+```
+`run` checks every workflow against the server first (node classes, checkpoint, LoRAs, sampler names; init images are uploaded automatically) and queues nothing if anything is missing, naming it. It then queues, waits, downloads the images into `runs/<asset-id>/<timestamp>/outputs/` with `run.json` and a copy of each workflow, and prints the postprocess command to use (`--images <that outputs folder>`). Raw outputs never go into a mod folder.
+- Other commands: `models` (checkpoints/LoRAs the server sees), `check`, `upload`, `queue --wait`, `fetch`, `interrupt`.
+- Exit code 2 = ComfyUI unreachable. **Ask the owner before starting ComfyUI**; add `--start` only after they said yes in this conversation (needs `comfyui_root` in the config; `doctor.py --write-config` sets it).
+- The URL defaults to `http://127.0.0.1:8188`; override with `--url` or `comfyui.url` in the config.
+- If the owner would rather queue by hand, the UI-format JSON files still drag into ComfyUI as before.
+
+## 3. Post-process (one master image -> every target)
+```
+python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs comfy/<dir>/jobs.json --images runs/<asset>/<ts>/outputs --out "<mod>/assets/<file>.png"
+python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs jobs.json --images outputs --target vanilla=a.png --target hd:8=a_hd.png --target portraiture:256=a_256.png
 python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --jobs jobs.json --pick happy=path.png ...      # choose specific outputs
 python "${CLAUDE_SKILL_DIR}/scripts/postprocess.py" --spec object_icon --inputs a.png b.png --out sheet.png   # no jobs.json
 ```
-Per frame: border-connected background removal (sprites/items; `--background keep|remove`, `--bg-tol`) → crop to subject → fit into frame (bottom-anchored for characters/craftables, fill-crop for portraits/tiles) → premultiplied area downscale → hard alpha → median-cut palette (`--colors`, defaults from config by type, or `--palette palette.png` to lock to a shared palette) → optional `--grayscale` (recolorable FS hair) and `--outline`.
-Uncovered frames keep the existing sheet's pixels (the placeholder), and the file stays flagged as a placeholder until every frame is filled. A 4× preview is written beside `jobs.json`.
+Targets: `vanilla` (game size), `hd:N` (vanilla frame x N, full colour; Sprites in Detail, see `sprites-in-detail.md`), `portraiture:F` (square F px frames, full colour; Portraiture, see `portraits.md`). Assets can list their targets in `sdv-project.json` (`"targets": [{"kind":"vanilla"},{"kind":"hd","scale":8}]`); `batch.py` then writes every target beside each take (`take_a.png`, `take_a.hd8.png`).
+
+Vanilla pipeline: border-connected background removal (cut-out specs) -> crop to subject -> **one common scale for the whole sheet** (so a figure keeps its relative size in every facing; `--no-consistent-scale` to fit each frame alone) -> downscale -> hard alpha -> **one palette for the whole sheet** (`--colors N`) -> orphan-pixel and single-pixel-hole cleanup (`--no-cleanup`) -> optional `--outline` / `--grayscale` (recolorable FS hair).
+- Downscale: `--resample auto` uses *dominant colour per output pixel* for cut-out subjects (sprites, items: crisp pixel look) and area averaging for portraits and tiles (faces stay readable). Force with `--resample dominant|box`. Live-tested: dominant is crisper but turns small eyes into dark blobs, so judge sprites at game size before accepting; the HD target is the better route for detailed faces.
+- Locked palettes: `palette.py build --images <approved reference(s)> --colors 24 --out art/<char>/palette.png --lock <char>` records `characters.<char>.palette_png`; then `postprocess.py --character <char>` (or `--palette <png>`) maps every colour to the nearest palette colour (Lab distance), so portraits, outfits and sprites of one character share colours. `--save-palette` writes the palette a sheet used.
+- Frames not covered keep the existing sheet's pixels (the placeholder); the file stays flagged as a placeholder until every frame is filled. A 4x preview is written beside `jobs.json`.
+
+### Fixing one frame without regenerating: `sheet.py`
+`slice`, `assemble`, `mirror-row`, `shift-frame`, `copy-frame`, `preview-anim` (GIF of a row at game-like speed), `diff`. Always writes to `--out`. Example: `sheet.py shift-frame sheet.png --spec character_sprite --frame-index 5 --dy -1 --out fixed.png`, then `sheet.py preview-anim fixed.png --spec character_sprite --row right --out right.gif` and look at it.
+
+## 3b. The review loop (automatic checks, then a human gate)
+`batch.py run` does this per asset; the pieces also work alone.
+```
+python "${CLAUDE_SKILL_DIR}/scripts/batch.py" run --ids mira_sprite          # N takes -> QA -> re-roll FAILs (bounded) -> contact sheet
+python "${CLAUDE_SKILL_DIR}/scripts/qa_art.py" check art/<id>/take_a.png --spec <key> [--character <id>] [--colors N]
+python "${CLAUDE_SKILL_DIR}/scripts/contact_sheet.py" art/<id>/take_*.png --spec <key> --reference art/<char>/reference.png --out art/<id>/contact.png
+python "${CLAUDE_SKILL_DIR}/scripts/batch.py" approve <id> --take b --owner-approved      # only after the owner chose
+python "${CLAUDE_SKILL_DIR}/scripts/batch.py" install <id> [--overwrite]                 # the only step that writes into the mod
+```
+1. **Generate** `takes` takes (default 3, `art_style.takes` or `--takes`), each with its own seed.
+2. **QA** (`qa_art.py`): dimensions, opaque corners (background not removed), clipping, feet baseline, figure size, empty frames, semi-transparent pixels, palette size/violations/distance, figure height across facings, **outfit colour drift between facings**, identical facings, portrait expressions (drifting from neutral or not changing). Each result has a number.
+3. **Re-roll**: takes with a FAIL get a new seed (and `--denoise` lowered by 0.10 when expressions drifted), at most `max_rounds` times (default 3). WARNs do not trigger re-rolls. Every rejection (round, take, reasons, what changed) is stored in the project row's `history` and in `art/<id>/qa.json`.
+4. **Contact sheet** `art/<id>/contact.png`: every take at 4x on light and dark backgrounds, at game size on a ground colour, the QA result, and the character reference beside it.
+5. **Stop.** The loop never approves or installs. Claude **opens `contact.png` and actually looks at it**, compares it with the reference and the character definition, says what it sees (including what the QA cannot see: faces, hands, style), recommends a take, and shows the owner. QA passing is not "looks good", and no take may be called good unseen.
+6. **Approve** records the owner's choice (status `approved`); it needs `--owner-approved`, which Claude passes only after the owner chose in the conversation, and it refuses a take that failed QA unless `--force`.
+7. **Install** copies the approved take (and each target that has a `file` in the project) into the mod. It refuses without an approved take, refuses to overwrite real (non-placeholder) art without `--overwrite`, and copies whatever it replaces to `backups/<timestamp>/` first. Then run `validate_mod.py` and check in game.
+
+Never overwrite approved or installed art, or any non-placeholder file, unless the owner asked for that replacement.
 
 ## 4. Validate
 `python "${CLAUDE_SKILL_DIR}/scripts/validate_mod.py" "<mod>"` — dimensions for `Portraits/*` and `Characters/*` targets, FS/AT rect bounds, Portraiture frame shape, placeholders still present.

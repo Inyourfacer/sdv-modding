@@ -1,0 +1,58 @@
+{
+  "_doc": "Model-family presets used with --preset (or art_style.preset in sdv-project.json). They fill prompt and sampler defaults for a checkpoint family; the owner's locked art_style always wins.",
+  "illustrious": {
+    "quality": "masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "lowres, worst quality, bad quality, bad anatomy, bad hands, jpeg artifacts, signature, watermark, text, cropped, multiple views, out of frame, detailed background, scenery",
+    "steps": 28,
+    "cfg": 5.5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "clip_skip": 2
+  },
+  "pony": {
+    "quality": "score_9, score_8_up, score_7_up, source_anime",
+    "negative": "score_6, score_5, score_4, lowres, bad anatomy, bad hands, jpeg artifacts, signature, watermark, text, cropped, multiple views, out of frame, detailed background, scenery",
+    "steps": 28,
+    "cfg": 7.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "clip_skip": 2
+  },
+  "_framing": {
+    "portrait": "solo, portrait, upper body, close-up, head and shoulders, looking at viewer, facing viewer, centered, simple background, white background",
+    "reference_sheet": "multiple views, reference sheet, character sheet, turnaround, front view, side view, back view, full body, standing, simple background, white background",
+    "sprite": "solo, 1girl, single character, full body, standing, simple background, white background",
+    "sprite_style": "pixel art, game sprite, chibi, simple shading, clean outlines",
+    "sprite_negative": "multiple views, multiple girls, 2girls, duplicate, split screen, reference sheet, character sheet, collage, text, close-up, cropped"
+  },
+  "_emotions": {
+    "neutral": "neutral expression, closed mouth, calm",
+    "happy": "smile, happy, open mouth, bright eyes",
+    "sad": "sad, frown, downcast eyes, teary eyes",
+    "unique": "smug, one eyebrow raised, confident smirk",
+    "love": "blush, shy smile, half-closed eyes, embarrassed",
+    "angry": "angry, frown, furrowed brow, v-shaped eyebrows, clenched teeth",
+    "surprised": "surprised, wide eyes, open mouth, raised eyebrows",
+    "worried": "worried, nervous, sweatdrop, furrowed brow",
+    "laughing": "laughing, eyes closed, open mouth, big smile",
+    "thinking": "thinking, hand on chin, looking up, pensive"
+  },
+  "_extended_labels": [
+    "surprised",
+    "worried",
+    "laughing",
+    "thinking"
+  ],
+  "_directions": {
+    "down": "front view",
+    "right": "from side, right side view, facing right",
+    "up": "from behind, facing away, back of head, back view",
+    "left": "from side, left side view, facing left"
+  },
+  "_direction_negative": {
+    "up": "face, eyes, looking at viewer, looking back, from front, front view",
+    "down": "from behind, back view, facing away",
+    "right": "from front, looking at viewer, from behind",
+    "left": "from front, looking at viewer, from behind"
+  }
+}

@@ -42,7 +42,7 @@ This matches the `fs_hair` spec layout (front, right, left, back left→right). 
   "Keywords": [ "rustic" ]
 }
 ```
-`Type` values include `Craftable`, `Furniture`, `Building`, `Crop`, `FruitTree`, `Tree`, `GiantCrop`, `ResourceClump`, `Bush`, `Flooring`, `Grass`, `Character`, `Decoration` (verify the current list). Variations stack vertically (spec `alt_texture`, `--frame 16x32 --rows <Variations>`). Seasonal textures: set `Seasons` and provide `texture_spring.png` etc. (verify naming). For mod items, `ItemName` is the item's internal name (1.6: often `{{ModId}}_Thing`) or use `ItemId` where supported.
+`Type` values include `Craftable`, `Furniture`, `Building`, `Crop`, `FruitTree`, `Tree`, `GiantCrop`, `ResourceClump`, `Bush`, `Flooring`, `Grass`, `Character`, `Decoration` (not checkable from the game files: see the Alternative Textures wiki for the current list). Variations stack vertically (spec `alt_texture`, `--frame 16x32 --rows <Variations>`). Seasonal textures: set `Seasons` and provide `texture_spring.png` etc. (naming is defined by the framework, not the game: see its wiki). For mod items, `ItemName` is the item's internal name (1.6: often `{{ModId}}_Thing`) or use `ItemId` where supported.
 
 ## Augmenting
 Add new folders under `Hairs/`, `Textures/` etc. in the user's pack; keep naming and size conventions identical to siblings already in the pack.

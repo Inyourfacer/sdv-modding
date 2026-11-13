@@ -4,3 +4,9 @@ __pycache__/
 sdv_previews/
 Thumbs.db
 .DS_Store
+.pytest_cache/
+runs/
+bin/
+obj/
+.sdv-game.json
+dist/

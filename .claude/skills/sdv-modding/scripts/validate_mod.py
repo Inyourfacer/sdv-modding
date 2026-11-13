@@ -13,17 +13,19 @@ Exit code 1 if any ERROR.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
 
 from PIL import Image
 
-from sdvlib import load_json
+from sdvlib import find_project, load_config, load_json, load_project, mods_path, normalize_manifest
 
 KNOWN_PACKS = {
     "pathoschild.contentpatcher": "cp", "platonymous.portraiture": "portraiture",
     "peacefulend.fashionsense": "fs", "peacefulend.alternativetextures": "at",
+    "bleakcodex.spritesindetail": "sid",
 }
 ACTIONS = {"Load", "EditData", "EditImage", "EditMap", "Include"}
 ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -35,13 +37,21 @@ IMG_TARGETS = [  # (target regex, width rule, height multiple, description)
 ]
 
 
+DEEP = True            # cross-reference checks (vcheck.py); --no-deep switches them off
+CONTEXT = {"vanilla": None, "mods_dirs": [], "hd_portraits": set()}
+
+
 class Report:
     def __init__(self):
         self.items = []
+        self.fixable = []       # (kind, a, b) things --fix can repair without guessing
 
     def err(self, where, msg): self.items.append(("ERROR", where, msg))
     def warn(self, where, msg): self.items.append(("WARN", where, msg))
     def info(self, where, msg): self.items.append(("INFO", where, msg))
+
+    def to_json(self):
+        return [{"level": l, "where": w, "message": m} for l, w, m in self.items]
 
     def print(self):
         for lvl, where, msg in self.items:
@@ -82,6 +92,10 @@ def check_image(path: Path, target: str, rep: Report, where: str):
     for rx, wrule, hmul, desc in IMG_TARGETS:
         if rx.search(target) and "{{" not in target:
             w, h = im.size
+            if desc.startswith("portrait") and path.resolve() in CONTEXT["hd_portraits"]:
+                if w % 2 or h % (w // 2):          # an asset the project lists as an HD portrait: any square frame size, 2 per row
+                    rep.err(where, f"{path.name} is {w}x{h}: an HD portrait sheet needs 2 square frames per row (height a multiple of width/2)")
+                continue
             if not wrule(w) or h % hmul:
                 rep.err(where, f"{path.name} is {w}x{h}: {desc}")
 
@@ -160,6 +174,7 @@ def check_cp(root: Path, man: dict, rep: Report):
     missing = sorted(k for k in used_i18n if k not in i18n_def)
     if missing:
         rep.err("i18n/default.json", f"{len(missing)} key(s) used but not defined: {', '.join(missing[:15])}{' …' if len(missing) > 15 else ''}")
+        rep.fixable += [("i18n", k, None) for k in missing]
     unused = sorted(k for k in i18n_def if k not in used_i18n)
     if unused and used_i18n:
         rep.info("i18n/default.json", f"{len(unused)} key(s) defined but not referenced in JSON (may be used elsewhere): {', '.join(unused[:10])}")
@@ -169,6 +184,16 @@ def check_cp(root: Path, man: dict, rep: Report):
             extra = [k for k in d if k not in i18n_def]
             if extra:
                 rep.warn(f"i18n/{lang.name}", f"keys not in default.json: {', '.join(extra[:10])}")
+
+
+def deep_cp(root: Path, man: dict, rep: Report):
+    if not DEEP:
+        return
+    try:
+        from vcheck import Deep
+        Deep(root, man, rep, CONTEXT["vanilla"], CONTEXT["mods_dirs"]).run()
+    except Exception as ex:   # a bug in a deep check must never hide the basic results
+        rep.info("deep checks", f"skipped because of an internal error: {ex}")
 
 
 def check_fs(root: Path, rep: Report):
@@ -214,6 +239,63 @@ def check_at(root: Path, rep: Report):
                 rep.err(f"Textures/{item.name}", f"{pngs[0].name} is {im.size}, expected at least {w}x{h * v} for {v} variation(s)")
 
 
+SID_KNOWN = {"Target", "FromFile", "SpriteWidth", "SpriteHeight", "WidthScale", "HeightScale", "SpriteOriginX", "SpriteOriginY", "BreathType"}
+
+
+def check_sid(root: Path, rep: Report):
+    """Sprites in Detail: fields as used by real packs (Target, FromFile, scales, sprite size, origin). Others are only reported."""
+    content = root / "content.json"
+    if not content.exists():
+        rep.err(str(root), "content.json missing"); return
+    data = read_json(content, rep)
+    if data is None:
+        return
+    sprites = data.get("Sprites")
+    if not isinstance(sprites, list):
+        rep.err("content.json", "needs a Sprites list"); return
+    for n, e in enumerate(sprites):
+        where = f"content.json Sprites[{n}]" + (f" ({e.get('Target')})" if isinstance(e, dict) else "")
+        if not isinstance(e, dict):
+            rep.err(where, "entry is not an object"); continue
+        for k in ("Target", "FromFile", "WidthScale", "HeightScale"):
+            if k not in e:
+                rep.err(where, f"missing {k}")
+        for k in e:
+            if k not in SID_KNOWN:
+                rep.info(where, f"field '{k}' is not one the skill knows (not checked)")
+        if e.get("Target") and not str(e["Target"]).lower().startswith("characters/"):
+            rep.warn(where, "Target is not under Characters/ (NPC sheets are Characters/<Name>)")
+        ws, hs = e.get("WidthScale"), e.get("HeightScale")
+        if not all(isinstance(x, (int, float)) and x > 0 for x in (ws, hs) if x is not None):
+            rep.err(where, "WidthScale/HeightScale must be positive numbers")
+        ff = e.get("FromFile")
+        if not ff or "{{" in str(ff):
+            continue
+        fp = root / str(ff)
+        if not fp.exists():
+            rep.err(where, f"FromFile not found: {ff}"); continue
+        try:
+            im = Image.open(fp)
+        except Exception as ex:
+            rep.err(where, f"cannot open {ff}: {ex}"); continue
+        if im.info.get("sdv_placeholder") == "1":
+            rep.warn(where, f"{ff} is still a placeholder")
+        if ws and hs:
+            if im.width % ws or im.height % hs:
+                rep.err(where, f"{ff} is {im.width}x{im.height}: not divisible by the scale ({ws}x{hs}), so it is not a whole vanilla sheet")
+            else:
+                vw, vh = im.width // ws, im.height // hs
+                if vw % 16:
+                    rep.warn(where, f"{ff} / scale is {vw}x{vh}: vanilla NPC sheet width is a multiple of 16 (usually 64)")
+                sw, sh = e.get("SpriteWidth"), e.get("SpriteHeight")
+                if sw and sh and abs(sw * 2 - sh) > 0:
+                    rep.warn(where, f"SpriteWidth:SpriteHeight is {sw}:{sh}; keep 1:2 like the vanilla 16x32 frame")
+                ox, oy = e.get("SpriteOriginX"), e.get("SpriteOriginY")
+                frame_w, frame_h = int(16 * ws), int(32 * hs)  # HD size of a vanilla 16x32 frame
+                if ox is not None and not 0 <= ox < frame_w or oy is not None and not 0 <= oy < frame_h:
+                    rep.err(where, f"SpriteOrigin ({ox},{oy}) is outside the {frame_w}x{frame_h} frame")
+
+
 def check_portraiture(root: Path, rep: Report):
     for p in root.glob("*.png"):
         im = Image.open(p)
@@ -244,6 +326,7 @@ def check_mod(root: Path, rep: Report):
     man = read_json(mpath, rep)
     if man is None:
         return
+    man = normalize_manifest(man)
     for f in ("Name", "Author", "Version", "UniqueID"):
         if not man.get(f):
             rep.err("manifest.json", f"missing {f}")
@@ -265,33 +348,99 @@ def check_mod(root: Path, rep: Report):
     kind = KNOWN_PACKS.get((cpf or {}).get("UniqueID", "").lower()) if cpf else None
     if kind == "cp":
         check_cp(root, man, rep)
+        deep_cp(root, man, rep)
     elif kind == "fs":
         check_fs(root, rep)
     elif kind == "at":
         check_at(root, rep)
     elif kind == "portraiture":
         check_portraiture(root, rep)
+    elif kind == "sid":
+        check_sid(root, rep)
     elif has_entry:
         check_smapi(root, man, rep)
         if (root / "i18n" / "default.json").exists():
             read_json(root / "i18n" / "default.json", rep)
     for junk in list(root.rglob("*_preview.png")) + list(root.rglob("Thumbs.db")) + list(root.rglob(".DS_Store")):
         rep.warn(str(junk.relative_to(root)), "stray file will ship with the mod")
+        rep.fixable.append(("delete", str(junk), None))
+
+
+def apply_fixes(root: Path, rep: Report) -> list[str]:
+    """Only unambiguous repairs: stub missing i18n keys, delete stray preview/OS files. Originals go to <mod parent>/backups/."""
+    import cptext
+    from datetime import datetime
+    done = []
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    keys = sorted({a for k, a, _ in rep.fixable if k == "i18n"})
+    if keys:
+        f = root / "i18n" / "default.json"
+        text = f.read_text(encoding="utf-8") if f.exists() else "{}\n"
+        if f.exists():
+            bk = root.parent / "backups" / stamp / root.name / "i18n" / "default.json"
+            bk.parent.mkdir(parents=True, exist_ok=True)
+            bk.write_bytes(f.read_bytes())
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(cptext.insert_in_object(text, {k: "TODO: " + k for k in keys}), encoding="utf-8")
+        done.append(f"i18n/default.json: added {len(keys)} stub key(s) marked 'TODO: ...'")
+    for kind, path, _ in rep.fixable:
+        if kind == "delete" and Path(path).exists():
+            Path(path).unlink()
+            done.append(f"deleted {Path(path).name}")
+    return done
 
 
 def main():
-    ap = argparse.ArgumentParser()
+    global DEEP
+    ap = argparse.ArgumentParser(description="Static checks for a Stardew mod folder: manifest, JSON, Content Patcher references, images, framework packs.")
     ap.add_argument("path")
     ap.add_argument("--recursive", action="store_true", help="validate every mod folder below path")
+    ap.add_argument("--json", action="store_true", help="machine-readable results")
+    ap.add_argument("--fix", action="store_true", help="repair only the unambiguous things (stub missing i18n keys, delete stray files), then re-check")
+    ap.add_argument("--no-deep", action="store_true", help="skip the cross-reference checks (vcheck.py)")
+    ap.add_argument("--mods-dir", action="append", default=[], help="Mods folder(s) to look for dependencies in (default: from the config)")
+    ap.add_argument("--root", help="unpacked game content (default: from the config / ~/.sdv-skill)")
     a = ap.parse_args()
+    DEEP = not a.no_deep
+    try:
+        from vanilla import Vanilla
+        cfg = load_config()
+        CONTEXT["vanilla"] = Vanilla(a.root, cfg)
+        dirs = [Path(d) for d in a.mods_dir] or [mods_path(cfg), Path.home() / "AppData" / "Roaming" / "Stardrop" / "Data" / "Selected Mods"]
+        CONTEXT["mods_dirs"] = dirs
+        pp = find_project()
+        if pp:
+            for asset in (load_project(pp) or {}).get("assets", []):
+                is_hd = asset.get("spec") == "portrait_hd" or any(t.get("kind") == "portraiture" for t in asset.get("targets") or []) and not any(t.get("kind") == "vanilla" for t in asset.get("targets") or [])
+                if is_hd:
+                    for f in asset.get("files", []):
+                        CONTEXT["hd_portraits"].add((pp.parent / f).resolve())
+    except Exception:
+        pass
     root = Path(a.path)
     mods = [p.parent for p in root.rglob("manifest.json")] if a.recursive else [root]
-    total = 0
+    total, out = 0, []
     for m in mods:
-        print(f"=== {m}")
         rep = Report()
         check_mod(m, rep)
-        total += rep.print()
+        fixed = []
+        if a.fix and rep.fixable:
+            fixed = apply_fixes(m, rep)
+            rep = Report()
+            check_mod(m, rep)
+        if a.json:
+            out.append({"mod": str(m), "errors": sum(1 for i in rep.items if i[0] == "ERROR"), "warnings": sum(1 for i in rep.items if i[0] == "WARN"),
+                        "results": rep.to_json(), "fixed": fixed, "fixable": len(rep.fixable)})
+            total += out[-1]["errors"]
+        else:
+            print(f"=== {m}")
+            for f in fixed:
+                print(f"[FIXED] {f}")
+            total += rep.print()
+            if rep.fixable and not a.fix:
+                print(f"{len(rep.fixable)} item(s) can be repaired automatically: re-run with --fix")
+    if a.json:
+        print(json.dumps(out if a.recursive else out[0], indent=2))
     sys.exit(1 if total else 0)
 
 

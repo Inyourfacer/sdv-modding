@@ -1,0 +1,85 @@
+{
+  "skill_name": "sdv-modding",
+  "evals": [
+    {
+      "id": 1,
+      "name": "new-cp-npc",
+      "prompt": "Add a new NPC called Mira to my Stardew Valley mod folder 'Mods/[CP] Test'. She's a young woman with short teal hair and freckles who lives in the Town and works at the Saloon. Give her portraits and a sprite (placeholders are fine), dialogue, a schedule, and gift tastes.",
+      "expected_output": "A [CP] pack where Mira has Data/Characters entry, Load of Characters/Portraits/Dialogue/schedules assets, gift tastes, i18n keys, {{ModId}}_ prefixed IDs, placeholder PNGs of correct size (portrait 128 wide, sprite 64x128), and validate_mod.py reports 0 errors.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "add-item-recipe-shop",
+      "prompt": "In my existing content pack, add a custom item 'Moonberry Jam' that sells for 220g, a cooking recipe for it learned at 2 hearts with Abigail, and sell the ingredient seeds at Pierre's shop in spring.",
+      "expected_output": "Edits in an Included data file following the pack's existing conventions; Data/Objects, Data/CookingRecipes (correct slash-string field order), Data/Shops TargetField entry, i18n keys, 16x16 sprite placeholder; validator clean.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "fix-from-log",
+      "prompt": "My mod isn't loading. Here is SMAPI-latest.txt (attached). Find out why and fix the mod.",
+      "expected_output": "Identifies the specific error lines (e.g. manifest/EntryDll/FromFile/dependency problem), explains the cause, fixes the files, re-runs validate_mod.py, and states what was not verified in game.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "hd-portraits",
+      "prompt": "Make an HD (256px) Portraiture pack for Abigail with six expressions from this description: purple hair, green eyes, adventurous outfit.",
+      "expected_output": "A [Portraiture] pack with Abigail.png at 512 wide, ComfyUI workflow JSON for six expressions with shared seed/subject tags, jobs.json, post-process command; does not claim the art is generated unless it ran.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "csharp-gmcm",
+      "prompt": "Create a C# SMAPI mod that gives the player a 'Lucky Coin' item when they press a configurable hotkey, with Generic Mod Config Menu support.",
+      "expected_output": "csproj with net6.0 and ModBuildConfig, manifest EntryDll matches assembly, ModConfig with SButton hotkey, GMCM registration guarded for null, ItemRegistry.Create with qualified id, builds with dotnet build.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "add-crop",
+      "prompt": "Add a new crop 'Starfruit Vine' that grows in summer in 12 days, with seeds sold at Pierre's, and a fruit that sells for 400g.",
+      "expected_output": "Data/Objects for seeds and produce, Data/Crops keyed by seed id with DaysInPhase summing to 12, Data/Shops entry, crop sheet placeholder 128x32 row, Texture loaded as Mods/{{ModId}}/Crops, validator clean.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "map-warp",
+      "prompt": "Add a new small cottage location off the Town map with a door at tile 60,70, using a tmx I will edit in Tiled. Give me the starting map and all the patches.",
+      "expected_output": "A valid .tmx stub with standard layers, Load Maps/{{ModId}}_Cottage, Data/Locations entry with CreateOnLoad, EditMap AddWarps on Maps/Town, return warp in the map, tilesheet naming per skill convention.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "redo-one-sprite-direction",
+      "prompt": "The 'right' row of Mira's walking sprite came out facing the wrong way. Regenerate just that direction and re-assemble the sheet.",
+      "expected_output": "Uses --frames/--per-row to regenerate only one job, reuses the stored seed and subject tags, re-runs postprocess with the existing sheet so other frames are kept, and says the frame is only checked by eye if it was not looked at.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "generate-and-approve-portrait-set",
+      "prompt": "Make portraits for my new NPC Mira (short teal hair, freckles, green overalls) and put them in my pack. Use ComfyUI.",
+      "expected_output": "Asks before starting ComfyUI; style locked (or style test shown); a reference sheet is made and approved before portraits; three takes, QA run, contact sheet opened and described; owner asked to choose; approve/install only after the owner's yes; nothing written into the mod before that.",
+      "files": [],
+      "scripted": false
+    },
+    {
+      "id": 10,
+      "name": "fix-from-pasted-log",
+      "prompt": "SMAPI says my pack 'Mira Pack' was skipped and nothing shows up. Log attached. Fix it.",
+      "expected_output": "Runs game.py log on the file, quotes the exact skipped-mod line and missing dependency, edits the manifest/dependency or tells the owner what to install, re-runs validate_mod.py and the log parser, and states that it was not tested in the game.",
+      "files": [],
+      "scripted": false
+    },
+    {
+      "id": 11,
+      "name": "add-npc-end-to-end-with-screenshot",
+      "prompt": "Add an NPC named Mira who lives in the Town, then show me she works in the game.",
+      "expected_output": "add.py npc, validator clean, asks before launching the game, game.py test with assert_npc + warp + screenshot on the test save, opens the screenshot and reports what it shows (including that the placeholder sprite may be hard to see) and what was not verified.",
+      "files": [],
+      "scripted": false
+    }
+  ]
+}

@@ -25,7 +25,7 @@ import random
 import shutil
 from pathlib import Path
 
-from sdvlib import dump_json, get_spec, load_config, safe_name
+from sdvlib import dump_json, get_spec, load_config, load_project, safe_name
 
 DIRECTION_WORDS = {"down": "front", "front": "front", "right": "right side", "left": "left side", "up": "back", "back": "back"}
 EXPRESSION_WORDS = {"neutral": "neutral, calm", "happy": "happy, smiling", "sad": "sad, downcast eyes",
@@ -172,15 +172,54 @@ def fill_prompt(template, subject, label, idx):
             .replace("{n}", str(idx + 1)))
 
 
+def run_recipe(a, cfg, cc, ch):
+    """Consistency recipes (sdvcomfy.recipes): API-format workflows + jobs.json, same layout postprocess.py reads."""
+    from sdvcomfy import recipes
+    from sdvcomfy.graph import settings_from
+    spec_key = a.spec or recipes.DEFAULT_SPEC[a.recipe]
+    spec = get_spec(spec_key, a.frame, a.cols, a.rows) if spec_key else None
+    loras = list(cc.get("loras") or []) + list((cc.get("asset_type_loras") or {}).get(spec_key, [])) if not a.no_config_loras else []
+    loras += list(ch.get("loras") or [])
+    for x in a.lora:
+        parts = x.split(":")
+        lo = {"name": parts[0], "strength_model": float(parts[1]) if len(parts) > 1 else 1.0}
+        lo["strength_clip"] = float(parts[2]) if len(parts) > 2 and parts[2] else lo["strength_model"]
+        if len(parts) > 3:
+            lo["trigger"] = ":".join(parts[3:])
+        loras.append(lo)
+    seed = a.seed if a.seed is not None else random.randint(1, 2**31 - 1)
+    preset = a.preset or ((cfg.get("_project_art_style") or {}).get("preset"))
+    s = settings_from(cfg, a.subject, seed, loras, preset, steps=a.steps, cfg_scale=a.cfg, extra=a.extra, negative_extra=a.negative_extra)
+    ctx = recipes.Ctx(s=s, name=safe_name(a.name), out_dir=Path(a.out_dir), spec=spec, spec_key=spec_key,
+                      reference=Path(a.reference) if a.reference else None, outfit_tags=a.outfit_tags,
+                      frames=a.frames.split(",") if a.frames else None, mirror_left=not a.no_mirror_left)
+    if a.denoise is not None:
+        ctx.denoise = a.denoise
+    man = recipes.get(a.recipe).build(ctx)
+    print(f"{a.recipe}: {len(man['workflows'])} workflow(s), {sum(1 for j in man['jobs'] if j.get('output_prefix'))} output(s) + jobs.json -> {a.out_dir}")
+    for w in man["workflows"]:
+        print("  ", w)
+    print(f"run: python comfy.py run {Path(a.out_dir) / '*.api.json'} --asset-id {ctx.name}")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--spec", required=True)
+    ap.add_argument("--recipe", default="simple", choices=["simple", "portrait_sheet", "sprite_sheet", "reference_sheet"],
+                    help="simple = one independent image per frame (default); the others are consistency recipes (references/art-recipes.md)")
+    ap.add_argument("--reference", help="approved reference image (needed by sprite_sheet; used by portrait_sheet when given)")
+    ap.add_argument("--outfit-tags", default="", help="recipes: outfit tags re-drawn from the default look")
+    ap.add_argument("--preset", help="illustrious | pony: fills quality/negative/sampler defaults (assets/presets.json)")
+    ap.add_argument("--checkpoint", help="override the configured checkpoint for this run (style tests)")
+    ap.add_argument("--spec")
     ap.add_argument("--name", required=True, help="asset/character name used in file prefixes")
-    ap.add_argument("--subject", required=True, help="Danbooru-style tags or description of the subject")
+    ap.add_argument("--subject", help="Danbooru-style tags or description of the subject (or use --character)")
+    ap.add_argument("--character", help="character id in sdv-project.json: supplies subject tags, seed and LoRAs")
+    ap.add_argument("--outfit", help="with --character: outfit key from the character's outfits (tags are appended)")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--frame"); ap.add_argument("--cols", type=int); ap.add_argument("--rows", type=int)
     ap.add_argument("--frames", help="comma list of job ids/labels to emit (others skipped)")
     ap.add_argument("--per-row", action="store_true", help="one job per sheet row (sprites/directions)")
+    ap.add_argument("--no-mirror-left", action="store_true", help="sprite_sheet: generate the left row instead of mirroring right")
     ap.add_argument("--mirror-left", action="store_true", help="left row = mirrored right row (no generation)")
     ap.add_argument("--init", help="init image file, or folder of <label>.png (from make_placeholder --init-dir)")
     ap.add_argument("--denoise", type=float)
@@ -194,11 +233,40 @@ def main():
     a = ap.parse_args()
 
     cfg = load_config(a.config)
+    ch = {}
+    if a.character:
+        proj = load_project()
+        ch = ((proj or {}).get("characters") or {}).get(a.character)
+        if not ch:
+            raise SystemExit(f"Character '{a.character}' not found in sdv-project.json (python project.py status).")
+        outfit = (ch.get("outfits") or {}).get(a.outfit) if a.outfit else None
+        if a.recipe != "simple":
+            a.outfit_tags = a.outfit_tags or outfit or ""
+            a.subject = a.subject or ch.get("subject")
+        elif not a.subject:
+            a.subject = ", ".join(x for x in [ch.get("subject"), outfit] if x)
+        want = "portrait_reference_image" if a.recipe == "portrait_sheet" else "reference_image"  # portraits start from a head crop
+        if a.reference is None and ch.get(want) and Path(ch[want]).exists():
+            a.reference = ch[want]
+        if a.seed is None and ch.get("seed") is not None:
+            a.seed = int(ch["seed"])
+    if not a.subject:
+        raise SystemExit("Give --subject tags or --character <id>.")
     cc = cfg["comfyui"]
+    if a.checkpoint:
+        cc["checkpoint"] = a.checkpoint
+    if not cc.get("checkpoint"):
+        raise SystemExit("No checkpoint set: put comfyui.checkpoint (a file name ComfyUI lists) in sdv-modding.config.json. "
+                         "Run scripts/doctor.py to list the checkpoints found.")
+    if a.recipe != "simple":
+        return run_recipe(a, cfg, cc, ch)
+    if not a.spec:
+        raise SystemExit("--spec is required for the simple recipe.")
     spec = get_spec(a.spec, a.frame, a.cols, a.rows)
     out = Path(a.out_dir); out.mkdir(parents=True, exist_ok=True)
 
     loras = [] if a.no_config_loras else list(cc.get("loras") or []) + list((cc.get("asset_type_loras") or {}).get(a.spec, []))
+    loras += list(ch.get("loras") or [])
     for s in a.lora:
         parts = s.split(":")
         lo = {"name": parts[0], "strength_model": float(parts[1]) if len(parts) > 1 else 1.0}

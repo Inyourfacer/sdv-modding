@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scaffold a Stardew Valley 1.6 mod.
 
-Types: cp | smapi | smapi+cp | portraiture | fashionsense | alttextures
+Types: cp | smapi | smapi+cp | portraiture | fashionsense | alttextures | sid (Sprites in Detail)
 
   python new_mod.py --type cp --name "Mira NPC" --out ./mods
   python new_mod.py --type smapi --name "Better Kegs" --out ./src --gmcm --harmony
@@ -13,12 +13,13 @@ from pathlib import Path
 
 from sdvlib import cp_format, dump_json, load_config, slug
 
-PREFIX = {"cp": "[CP] ", "portraiture": "[Portraiture] ", "fashionsense": "[FS] ", "alttextures": "[AT] "}
+PREFIX = {"cp": "[CP] ", "portraiture": "[Portraiture] ", "fashionsense": "[FS] ", "alttextures": "[AT] ", "sid": "[SID] "}
 PACK_FOR = {
     "cp": "Pathoschild.ContentPatcher",
     "portraiture": "Platonymous.Portraiture",
     "fashionsense": "PeacefulEnd.FashionSense",
     "alttextures": "PeacefulEnd.AlternativeTextures",
+    "sid": "BleakCodex.SpritesInDetail",
 }
 
 
@@ -147,7 +148,7 @@ public interface IGenericModConfigMenuApi
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--type", required=True, choices=["cp", "smapi", "smapi+cp", "portraiture", "fashionsense", "alttextures"])
+    ap.add_argument("--type", required=True, choices=["cp", "smapi", "smapi+cp", "portraiture", "fashionsense", "alttextures", "sid"])
     ap.add_argument("--name", required=True)
     ap.add_argument("--out", default=".")
     ap.add_argument("--author")
@@ -187,6 +188,28 @@ def main():
         dump_json(manifest(a.name, author, uid, a.description, a.version, PACK_FOR["fashionsense"]), root / "manifest.json")
         for d in ("Hairs", "Accessories", "Hats", "Shirts", "Pants", "Sleeves", "Shoes"):
             (root / d).mkdir(parents=True, exist_ok=True)
+        made.append(root)
+    if a.type == "sid":
+        root = out / f"{PREFIX['sid']}{a.name}"
+        dump_json(manifest(a.name, author, uid, a.description, a.version, PACK_FOR["sid"]), root / "manifest.json")
+        write(root / "content.json", """{
+  // Sprites in Detail pack. Each entry replaces one NPC sprite sheet with an N-times larger one.
+  // WidthScale/HeightScale = HD sheet size / vanilla sheet size (8 -> 64x128 becomes 512x1024).
+  // SpriteWidth/SpriteHeight = how big one frame is drawn, in game pixels (vanilla 16x32; keep 1:2).
+  // SpriteOriginX/Y = the point in the HD frame that stands on the NPC's tile (a little above the feet).
+  "Sprites": [
+    // {
+    //   "Target": "Characters/Me.MyMod_Mira",
+    //   "FromFile": "assets/Mira_hd.png",
+    //   "SpriteWidth": 16, "SpriteHeight": 32,
+    //   "WidthScale": 8, "HeightScale": 8,
+    //   "SpriteOriginX": 64, "SpriteOriginY": 225,
+    //   "BreathType": "None"
+    // }
+  ]
+}
+""")
+        (root / "assets").mkdir(parents=True, exist_ok=True)
         made.append(root)
     if a.type == "alttextures":
         root = out / f"{PREFIX['alttextures']}{a.name}"

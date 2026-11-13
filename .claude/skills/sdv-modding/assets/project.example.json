@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "id_prefix": "Me",
+  "mods": [
+    { "folder": "[CP] My Mod", "type": "cp", "unique_id": "Me.MyMod", "version": "1.0.0" }
+  ],
+  "ids": {
+    "Me.MyMod_Mira": { "kind": "npc", "owner": "[CP] My Mod/data/npc.json" }
+  },
+  "art_style": {
+    "checkpoint": "illustriousXL_v01.safetensors",
+    "loras": [ { "name": "pixel-art-xl.safetensors", "strength_model": 0.8, "strength_clip": 0.8, "trigger": "pixel art" } ],
+    "quality_prefix": "masterpiece, best quality",
+    "negative": "worst quality, low quality, blurry, watermark",
+    "style_suffix": "cozy farm game, soft shading, clean outlines",
+    "palette_png": null,
+    "takes": 3,
+    "max_rounds": 3
+  },
+  "characters": {
+    "Me.MyMod_Mira": {
+      "display_name": "Mira",
+      "subject": "1girl, young woman, short teal hair, freckles, green overalls",
+      "outfits": { "beach": "bikini, sun hat" },
+      "seed": 123456789,
+      "loras": [],
+      "reference_image": "art/Mira/reference.png",
+      "palette_png": "art/Mira/palette.png",
+      "sprite_frame": "16x32"
+    }
+  },
+  "assets": [
+    {
+      "id": "mira_portrait",
+      "mod": "[CP] My Mod",
+      "spec": "portrait",
+      "character": "Me.MyMod_Mira",
+      "files": ["[CP] My Mod/assets/portraits/Mira.png"],
+      "targets": [ { "kind": "vanilla" }, { "kind": "portraiture", "frame": 256 } ],
+      "status": "placeholder",
+      "take": null,
+      "prompt": { "positive": null, "negative": null },
+      "notes": ""
+    }
+  ],
+  "test": {
+    "save_prefix": "sdvtest_",
+    "checks": [ { "name": "mira_home", "warp": "Town 52 70", "commands": ["patch summary Me.MyMod"], "screenshot": true } ]
+  }
+}
