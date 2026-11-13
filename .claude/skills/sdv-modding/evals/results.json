@@ -1,0 +1,79 @@
+{
+  "skill_version": "2.0.0",
+  "results": [
+    {
+      "id": 1,
+      "name": "new-cp-npc",
+      "status": "PASS",
+      "note": "NPC pack validates; placeholder PNGs 128x192 / 64x128; all IDs prefixed; i18n, gift tastes, dialogue, schedule present",
+      "seconds": 1.4
+    },
+    {
+      "id": 2,
+      "name": "add-item-recipe-shop",
+      "status": "PASS",
+      "note": "author's comments and Include kept; item price, 5-part recipe string and SeedShop TargetField correct; validator clean",
+      "seconds": 2.5
+    },
+    {
+      "id": 3,
+      "name": "fix-from-log",
+      "status": "PASS",
+      "note": "log parser names the skipped mod + missing dependency, the failed asset and the exception, and says the owner's mods are not clean",
+      "seconds": 0.1
+    },
+    {
+      "id": 4,
+      "name": "hd-portraits",
+      "status": "PASS",
+      "note": "Portraiture pack scaffold validates (512x768 placeholder); portrait workflow has the 6 expression jobs with one shared seed; post-process writes the 256 px target",
+      "seconds": 1.0
+    },
+    {
+      "id": 5,
+      "name": "csharp-gmcm",
+      "status": "PASS",
+      "note": "scaffold has net6.0 + ModBuildConfig + Harmony, GMCM optional and null-guarded, EntryDll matches the assembly, and it builds against the installed game",
+      "seconds": 1.3
+    },
+    {
+      "id": 6,
+      "name": "add-crop",
+      "status": "PASS",
+      "note": "Data/Crops phases sum to 12 days, seeds Category -74, produce 400g, SeedShop entry, 128x32 crop row, validator clean",
+      "seconds": 1.4
+    },
+    {
+      "id": 7,
+      "name": "map-warp",
+      "status": "PASS",
+      "note": "valid .tmx with Warp back out, Load + Data/Locations + Town AddWarps; map checker and validator clean",
+      "seconds": 1.7
+    },
+    {
+      "id": 8,
+      "name": "redo-one-sprite-direction",
+      "status": "PASS",
+      "note": "only the 'right' job is regenerated with the same seed; the other rows of the existing sheet stay pixel-identical",
+      "seconds": 2.7
+    },
+    {
+      "id": 9,
+      "name": "generate-and-approve-portrait-set",
+      "status": "not scripted",
+      "note": "needs a model-driven run (end-to-end flow with the owner)"
+    },
+    {
+      "id": 10,
+      "name": "fix-from-pasted-log",
+      "status": "not scripted",
+      "note": "needs a model-driven run (end-to-end flow with the owner)"
+    },
+    {
+      "id": 11,
+      "name": "add-npc-end-to-end-with-screenshot",
+      "status": "not scripted",
+      "note": "needs a model-driven run (end-to-end flow with the owner)"
+    }
+  ]
+}

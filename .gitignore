@@ -9,3 +9,4 @@ runs/
 bin/
 obj/
 .sdv-game.json
+dist/

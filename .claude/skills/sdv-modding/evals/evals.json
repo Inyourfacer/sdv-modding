@@ -56,6 +56,30 @@
       "prompt": "The 'right' row of Mira's walking sprite came out facing the wrong way. Regenerate just that direction and re-assemble the sheet.",
       "expected_output": "Uses --frames/--per-row to regenerate only one job, reuses the stored seed and subject tags, re-runs postprocess with the existing sheet so other frames are kept, and says the frame is only checked by eye if it was not looked at.",
       "files": []
+    },
+    {
+      "id": 9,
+      "name": "generate-and-approve-portrait-set",
+      "prompt": "Make portraits for my new NPC Mira (short teal hair, freckles, green overalls) and put them in my pack. Use ComfyUI.",
+      "expected_output": "Asks before starting ComfyUI; style locked (or style test shown); a reference sheet is made and approved before portraits; three takes, QA run, contact sheet opened and described; owner asked to choose; approve/install only after the owner's yes; nothing written into the mod before that.",
+      "files": [],
+      "scripted": false
+    },
+    {
+      "id": 10,
+      "name": "fix-from-pasted-log",
+      "prompt": "SMAPI says my pack 'Mira Pack' was skipped and nothing shows up. Log attached. Fix it.",
+      "expected_output": "Runs game.py log on the file, quotes the exact skipped-mod line and missing dependency, edits the manifest/dependency or tells the owner what to install, re-runs validate_mod.py and the log parser, and states that it was not tested in the game.",
+      "files": [],
+      "scripted": false
+    },
+    {
+      "id": 11,
+      "name": "add-npc-end-to-end-with-screenshot",
+      "prompt": "Add an NPC named Mira who lives in the Town, then show me she works in the game.",
+      "expected_output": "add.py npc, validator clean, asks before launching the game, game.py test with assert_npc + warp + screenshot on the test save, opens the screenshot and reports what it shows (including that the placeholder sprite may be hard to see) and what was not verified.",
+      "files": [],
+      "scripted": false
     }
   ]
 }

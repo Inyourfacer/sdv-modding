@@ -1,95 +1,67 @@
 ---
 name: sdv-modding
-description: Create, extend, fix and package Stardew Valley 1.6 mods — SMAPI C# mods, Content Patcher packs, Portraiture/HD portraits, custom NPCs/dialogue/events/mail, Fashion Sense, Alternative Textures, maps, buildings, items, crops. Makes spec-exact placeholder art and ComfyUI (Illustrious/SDXL + LoRA) workflow JSON for real assets, then post-processes generated images into game-ready sheets. Use for any Stardew/SDV/SMAPI/Content Patcher modding request, including augmenting an existing mod.
+description: Build, fix, test and release Stardew Valley 1.6 mods. Content Patcher packs, SMAPI C# mods, custom NPCs/dialogue/events/mail/shops/crops/machines/locations, maps (.tmx), Portraiture and Sprites in Detail (HD), Fashion Sense, Alternative Textures. One-command generators, a validator that cross-checks references against the game's own data, SMAPI log diagnosis ("my mod won't load", "SMAPI error"), real in-game tests with screenshots, and character art made with ComfyUI (consistent portraits, sprites, items) with QA and approval gates. Use for any Stardew/SDV/SMAPI/Content Patcher request, including adding to an existing mod or making art for one.
 ---
 
 # Stardew Valley Modding
 
-Target: **Stardew Valley 1.6.x, SMAPI 4.x, .NET 6, Windows**. All paths, IDs and data formats in this skill assume 1.6 (string item IDs, `Data/Objects` models, `Data/Characters`, `Data/Locations`, game state queries, trigger actions).
+Target: **Stardew Valley 1.6.x, SMAPI 4.x, .NET 6, Windows**. IDs and data formats assume 1.6 (string item IDs, `Data/Objects` models, game state queries, trigger actions). Skill version: see `VERSION`.
 
 ## Stance: facilitate, don't editorialize
+- Build what the user asks for. No opinions on the mod's concept, theme, writing, art direction or balance unless asked. No padding with alternatives. Ask only questions whose answers change what gets built.
+- **Technical facts are not opinions.** Always report what will break or silently not apply: invalid JSON, wrong sizes, ID collisions, missing dependencies, unknown fields, load order. Fix it when the fix is unambiguous.
+- Mirror the user's conventions (naming, indentation, comments, folder layout, `Format`) when augmenting a mod.
 
-- Build what the user asks for. Do not offer opinions on the mod's concept, theme, writing, art direction, balance, or whether it "should" exist — unless the user explicitly asks for feedback or suggestions.
-- Do not pad replies with alternatives, "you might also consider…", or design commentary. Ask only questions whose answers change what gets built (missing NPC name, which existing mod to patch, frame count).
-- **Technical facts are not opinions.** Always report things that will break: invalid JSON, wrong image dimensions, ID collisions, missing dependencies, load-order conflicts, a patch that will silently not apply. State them plainly and fix them if the fix is unambiguous.
-- Mirror the user's existing conventions (naming, indentation, comment style, folder layout, Format version) when augmenting a mod.
+## Hard rules (always)
+1. **Look before you say it is good.** Open the contact sheet or screenshot (Read the PNG) before calling art or in-game behaviour correct. QA/validator PASS means "no mechanical problem", never "looks right".
+2. **Nothing real is overwritten without the owner's OK.** Generated art goes to `art/`, reaches a mod only via `batch.py approve` (owner chose) then `install` (backs up). `add.py` backs up what it edits and refuses existing IDs. Never touch approved or non-placeholder files unprompted.
+3. **Ask before starting programs, every session:** ComfyUI (`comfy.py --start`) and the game (`game.py ... --confirmed-by-owner`). The harness only ever loads a save whose name starts with a prefix containing "test"; never any other save.
+4. **Ask before downloading or running executables** (state file, source, size; use a fresh empty folder; check the size).
+5. **Never invent field names, IDs or formats.** Use `gamedata.py` (field names), `vanilla.py` (sizes, ids, data), `asset_specs.json` (layouts), or the docs of record. If unverified, say so.
+6. Screenshots can show the owner's screen: only the game window is captured and only while it is in front; if one shows anything else, delete it and say so.
 
-## Setup (first use in a project)
+## The flow
+**1. Orient** (first use in a project)
+`python "${CLAUDE_SKILL_DIR}/scripts/doctor.py" [--write-config]` (game, SMAPI, frameworks, ComfyUI, models, tools, unpacked content; never starts anything) → `project.py status` (or `project.py sync` if there is no `sdv-project.json`) → read the mod's `manifest.json`, `content.json` (and `Include`s), `i18n/`, assets. Scripts: `${CLAUDE_SKILL_DIR}/scripts/` (a bare `scripts/<name>.py` in references means the same); run them from the project root; they need Pillow + numpy; C# needs the .NET SDK. Content Patcher `Format` for new packs = installed version (doctor reports it).
 
-0. Run `python "${CLAUDE_SKILL_DIR}/scripts/doctor.py"` to see what is installed (game, SMAPI, frameworks, ComfyUI, models, tools). `--write-config` fills empty values in the config. It never starts programs; ask the owner before starting ComfyUI or the game.
-1. Look for `sdv-modding.config.json` in the project root, then in this skill folder. If neither exists, copy `config.example.json` to the project root and ask the user only for values that can't be auto-detected (author name, UniqueID prefix, checkpoint/LoRA file names).
-2. Game path comes from the config or doctor (Steam libraries and registry are searched). Mods folder = `<game>\Mods`. Verify it exists before deploying.
-3. Project memory: if `sdv-project.json` exists in the project root, run `python "${CLAUDE_SKILL_DIR}/scripts/project.py" status` and read it before changing anything (custom IDs, characters with canonical tags/seed/LoRAs, locked `art_style`, asset status). If it doesn't, run `project.py sync` in the project root (it scans the mod folders; it is non-destructive and safe to re-run after changes). Register new custom IDs by re-running `sync`; `project.py ids check` catches unprefixed or duplicate IDs. Character tags, seed and LoRAs live in the project file, not in prompts retyped each session: `make_comfy_workflow.py --character <id> [--outfit <key>]`. See `assets/project.example.json`.
-4. The installed Content Patcher version (read `<Mods>\ContentPatcher\manifest.json`) is the `Format` to use for new packs. Fallback: `2.7.0`.
-
-Python scripts need Pillow + numpy (`pip install pillow numpy`). C# builds need the .NET 6+ SDK. Scripts live in `${CLAUDE_SKILL_DIR}/scripts/` (bare `scripts/x.py` mentions in reference files mean the same path). Run them with the user's project as the working directory so outputs and `sdv-modding.config.json` resolve there.
-
-## Workflow
-
-Decide what the request touches, then read only the matching reference file(s):
-
-| Request involves | Read |
+**2. Change**
+| Request | Use |
 |---|---|
-| C# code, events, Harmony, APIs, GMCM, custom CP tokens | `references/smapi.md` |
-| Any JSON-only content change, tokens, conditions, config | `references/content-patcher.md` |
-| Portraits (vanilla 64px, Portraiture, HD) | `references/portraits.md` |
-| New/edited NPCs, dialogue, schedules, gift tastes, events, mail, marriage | `references/npcs-dialogue-events.md` |
-| Objects, big craftables, furniture, crops, fruit trees, recipes, shops, machines, clothing items, weapons | `references/items.md` |
-| Fashion Sense or Alternative Textures packs | `references/fashion-sense-alt-textures.md` |
-| HD NPC sprites (Sprites in Detail) | `references/sprites-in-detail.md` |
-| Testing in game, reading a SMAPI log, "my mod won't load" | `references/testing.md` |
-| Validator output, vanilla sizes/ids/data, unpacking the game content | `references/validation.md` |
-| Maps, Tiled, locations, warps, farm types, buildings | `references/maps-buildings.md` |
-| Installing/using Tiled, Aseprite, StardewXnbHack, ILSpy | `references/tool-setup.md` |
-| Any image asset (placeholder, generation, post-processing) | `references/asset-pipeline.md` + `assets/asset_specs.json` |
-| Characters: portraits, outfits, sprites, reference sheets, style choice, takes | `references/art-recipes.md` |
+| New mod | `new_mod.py --type cp\|smapi\|smapi+cp\|portraiture\|fashionsense\|alttextures\|sid --name ... --out <dir>` |
+| NPC, item, big craftable, machine, crop, fruit tree, recipe, shop, shop item, mail, event, location, SID sprite, Portraiture set | `add.py <kind> --mod "<[CP] folder>" --name ... [--dry-run]` (patch file + i18n + placeholder art + registration + validate) |
+| Maps | `tmx.py info\|new\|check\|render\|set-prop\|add-warp\|set-tile` |
+| Anything else, hand edits | the reference file for the topic (table below) |
+Prefix custom IDs `{{ModId}}_` (CP) / `$"{ModManifest.UniqueID}_"` (C#). Player text goes in `i18n/default.json`. Load assets under `Mods/{{ModId}}/...`, never over vanilla sheets unless a replacement is wanted. `UpdateKeys` stay empty until the owner gives a real ID.
+*Augmenting:* your own mod → edit in place, keep its `Format` (say when bumping); someone else's → a separate `[CP] <Original> Addon` pack depending on it (`Priority: "Late"` where order matters), editing in place only if asked; put new patches in a new `Include`d file.
 
-### New mod
-```
-python "${CLAUDE_SKILL_DIR}/scripts/new_mod.py" --type cp --name "My Mod" --out <dir>        # Content Patcher pack
-python "${CLAUDE_SKILL_DIR}/scripts/new_mod.py" --type smapi --name "My Mod" --out <dir>     # C# SMAPI mod
-python "${CLAUDE_SKILL_DIR}/scripts/new_mod.py" --type smapi+cp --name "My Mod" --out <dir>  # C# mod + paired CP pack
-# also: portraiture, fashionsense, alttextures, sid (Sprites in Detail)
-```
-Then fill in content following the reference docs. Prefix every custom ID with `{{ModId}}_` (CP) or `$"{ModManifest.UniqueID}_"` (C#).
+**3. Art** (only when images are needed; details in `references/asset-pipeline.md` and `art-recipes.md`)
+`make_placeholder.py` gives a spec-exact PNG so the mod loads at once. Real art: lock a style once (`style.py test` → pick → `lock`), approve a character reference (`batch.py approve-reference`), then `batch.py run` makes N takes via ComfyUI (`comfy.py`), post-processes to every target (vanilla / `hd:N` / `portraiture:F`), runs QA, re-rolls failures (bounded), and writes `art/<id>/contact.png`. **Stop there**: open it, review against the character, show the owner, then `approve --owner-approved`, then `install`. Fix single frames with `sheet.py` instead of regenerating. Say once that generation cannot make clean 16x32 walk cycles (the HD route is the strong one).
 
-### Adding content (one command each)
-Prefer the generators over hand-writing JSON for the common requests; each writes the patch file, i18n keys, placeholder art and project registration, appends one `Include` (the author's files are not reformatted), refuses an existing ID, backs up what it edits, and validates:
-```
-python "${CLAUDE_SKILL_DIR}/scripts/add.py" npc|item|big-craftable|machine|crop|fruit-tree|recipe|shop-item|shop|mail|event|location|sid-sprite --mod "<[CP] folder>" --name ... [--dry-run]
-python "${CLAUDE_SKILL_DIR}/scripts/add.py" portrait-set --out <dir> --name "My Portraits" --npcs Abigail,Leo --frame 256
-```
-Field names come from the game's own data models (`assets/gamedata_fields.json`, regenerate with `gamedata_fields.py`; `gamedata.check_entry()` checks any entry). Not generated yet: furniture, hats/shirts/weapons. `add.py location` builds a new indoor location with its map; maps can be inspected, edited and rendered with `scripts/tmx.py`. Event scripts are skeletons. Hand edits follow the reference files; check unfamiliar fields with `gamedata.py` before using them.
+**4. Verify** (cheapest first)
+`validate_mod.py <folder> [--fix]` (syntax, manifest, references, field names against the game models, textures/indexes, NPC pieces, items, dependencies, token-expanded paths, maps) → `game.py log --mods "<name or id>"` for a SMAPI log → `game.py test --confirmed-by-owner --mods "<folder>"` for a real run (ask first; isolated mods folder, test save only, screenshots in `tests/<time>/shots`) → open the screenshots. C#: `dotnet build`. Content packs in the game's Mods folder are already deployed; for copies use `deploy.py <folder> [--zip]`. Note: the owner may play through a Stardrop profile with its own mods path.
 
-### Augmenting an existing mod
-1. Read `manifest.json`, `content.json` (and every `Include`d file), `i18n/`, and the asset folder before changing anything. For C#, read the csproj and ModEntry.
-2. If the mod is the user's own: edit in place, keep its Format version unless a needed feature requires bumping (say so when you bump).
-3. If it's someone else's mod: by default create a separate patch mod (`[CP] <Original> Addon`) with the original as a `Dependencies` entry and edits targeting the same assets (CP `Priority: "Late"` where order matters). Edit in place only when the user asks.
-4. Add new patch blocks in a new `Include`d file (e.g. `data/addon.json`) when the existing content.json is large, so changes are easy to diff.
+**5. Report**
+Say what changed (files), what was verified and how (validator, log, screenshot you opened, live run), and what was **not** verified and why (no unpacked content, game not launched, console steps unsupported). Do not describe unverified things as working.
 
-### Assets
-Every image asset goes through the same pipeline — see `references/asset-pipeline.md`:
-1. **Placeholder** — `scripts/make_placeholder.py` writes a spec-exact PNG (correct size, frame grid, labels, silhouettes) straight into the mod's `assets/` folder so the mod loads and is testable immediately.
-2. **Workflow** — `scripts/make_comfy_workflow.py` writes ComfyUI workflow JSON (one per frame/expression/variant) targeting the user's Illustrious checkpoint + LoRAs, plus a `jobs.json` manifest describing how outputs map back to frames. `scripts/comfy.py run` queues them on the running ComfyUI and downloads the results into `runs/` (ask the owner before starting ComfyUI); the user can still load the JSON by hand.
-3. **Post-process** — `scripts/postprocess.py` takes the generated images + `jobs.json`, removes background, downscales to pixel size, palette-reduces, assembles the sheet in the exact layout, and overwrites the placeholder.
-4. **Validate** — `scripts/validate_mod.py <modfolder>`.
-
-For characters use the recipes in `references/art-recipes.md` (style locked → reference approved → portraits/sprites derived from it, several takes, candidates in `art/` not the mod); `scripts/batch.py` runs that for the project's assets and `scripts/style.py` compares and locks the art style. Generated art goes through `batch.py run` (QA + bounded re-rolls + contact sheet), then you open `art/<id>/contact.png` and look at it, then the owner chooses (`batch.py approve --owner-approved`), then `batch.py install`. Never call art good without having opened the image; never install or overwrite without the owner's OK (see `references/asset-pipeline.md`, section 3b).
-
-Never hand-wave dimensions: always pull from `assets/asset_specs.json`; for anything not in a spec, measure the vanilla file with `scripts/vanilla.py size <asset>` (needs the unpacked game content; `doctor.py` says whether it exists).
-
-### Validate, build, deploy
-```
-python "${CLAUDE_SKILL_DIR}/scripts/validate_mod.py" <modfolder> [--fix] [--json]   # JSON, manifest, FromFile paths (token-expanded), image dims, i18n, ID prefixes, game-model field names, texture/index/NPC/item/dependency cross-checks
-dotnet build                                          # C#: ModBuildConfig auto-deploys to Mods
-python "${CLAUDE_SKILL_DIR}/scripts/deploy.py" <modfolder> [--zip]          # JSON packs: copy to Mods; --zip makes a release zip
-```
-Logs: `python "${CLAUDE_SKILL_DIR}/scripts/game.py" log --mods "<Name or UniqueID>"` parses a SMAPI log and says what is wrong with your mods. Real in-game test (starts the game: ask the owner first, `--confirmed-by-owner` only after a yes): `game.py test --confirmed-by-owner --mods "<folder>"`, then open the screenshots; see `references/testing.md`.
-In game: `patch summary <ModId>`, `patch reload <ModId>`, `patch export <Asset>` (Content Patcher console commands). SMAPI log: `%AppData%\StardewValley\ErrorLogs\SMAPI-latest.txt`.
+## Which reference to read
+| Topic | File |
+|---|---|
+| C#, Harmony, events, APIs, GMCM, custom CP tokens | `references/smapi.md` |
+| JSON-only changes, tokens, conditions, config | `references/content-patcher.md` |
+| NPCs, dialogue, schedules, gift tastes, events, mail, marriage | `references/npcs-dialogue-events.md` |
+| Objects, craftables, furniture, crops, trees, recipes, shops, machines, clothing, weapons | `references/items.md` |
+| Portraits (vanilla, Portraiture, HD) | `references/portraits.md` |
+| HD NPC sprites | `references/sprites-in-detail.md` |
+| Fashion Sense, Alternative Textures | `references/fashion-sense-alt-textures.md` |
+| Maps, locations, warps, farm types, buildings | `references/maps-buildings.md` |
+| Images: placeholders, generation, post-processing, review loop | `references/asset-pipeline.md`, `assets/asset_specs.json` |
+| Characters, outfits, reference sheets, style, takes | `references/art-recipes.md` |
+| Validator output, vanilla lookups, unpacking the game | `references/validation.md` |
+| In-game tests, SMAPI logs | `references/testing.md` |
+| An error message or "it does not load" | `references/troubleshooting.md` |
+| Releasing (zip, changelog, versions) | `references/release.md` |
+| Tiled, Aseprite, StardewXnbHack, ILSpy | `references/tool-setup.md` |
+| Project memory file (`sdv-project.json`) | `assets/project.example.json` |
 
 ## Conventions
-- Folder names: `[CP] Name`, `[FS] Name`, `[AT] Name`, `[Portraiture] Name`; C# mods use the plain name.
-- UniqueID: `<AuthorPrefix>.<ModNameNoSpaces>`; content packs that pair with a C# mod: `<AuthorPrefix>.<ModName>.CP`.
-- All player-visible text goes in `i18n/default.json` and is referenced with `{{i18n:key}}` (CP) or `Helper.Translation.Get("key")` (C#).
-- Assets loaded under `Mods/{{ModId}}/...` asset names, never overwriting vanilla sheets with `Load` unless the user wants a replacement.
-- Default `"UpdateKeys": []` — fill in only with a real Nexus/GitHub ID from the user.
+Folders `[CP] Name`, `[FS] Name`, `[AT] Name`, `[Portraiture] Name`, `[SID] Name`; C# mods the plain name. UniqueID `<AuthorPrefix>.<ModNameNoSpaces>`; a CP pack paired with a C# mod `<Prefix>.<Mod>.CP`. Manifest keys are case-insensitive in SMAPI; the scripts read them that way too. Game-side console help: `patch summary <ModId>`, `patch reload <ModId>`, `patch export <Asset>`; log at `%AppData%\StardewValley\ErrorLogs\SMAPI-latest.txt`.
