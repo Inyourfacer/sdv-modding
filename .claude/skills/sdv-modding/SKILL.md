@@ -38,6 +38,7 @@ Decide what the request touches, then read only the matching reference file(s):
 | Fashion Sense or Alternative Textures packs | `references/fashion-sense-alt-textures.md` |
 | HD NPC sprites (Sprites in Detail) | `references/sprites-in-detail.md` |
 | Testing in game, reading a SMAPI log, "my mod won't load" | `references/testing.md` |
+| Validator output, vanilla sizes/ids/data, unpacking the game content | `references/validation.md` |
 | Maps, Tiled, locations, warps, farm types, buildings | `references/maps-buildings.md` |
 | Any image asset (placeholder, generation, post-processing) | `references/asset-pipeline.md` + `assets/asset_specs.json` |
 | Characters: portraits, outfits, sprites, reference sheets, style choice, takes | `references/art-recipes.md` |
@@ -74,11 +75,11 @@ Every image asset goes through the same pipeline — see `references/asset-pipel
 
 For characters use the recipes in `references/art-recipes.md` (style locked → reference approved → portraits/sprites derived from it, several takes, candidates in `art/` not the mod); `scripts/batch.py` runs that for the project's assets and `scripts/style.py` compares and locks the art style. Generated art goes through `batch.py run` (QA + bounded re-rolls + contact sheet), then you open `art/<id>/contact.png` and look at it, then the owner chooses (`batch.py approve --owner-approved`), then `batch.py install`. Never call art good without having opened the image; never install or overwrite without the owner's OK (see `references/asset-pipeline.md`, section 3b).
 
-Never hand-wave dimensions: always pull from `assets/asset_specs.json`; if a spec says `verify`, unpack the game content (StardewXnbHack) and measure the vanilla file first.
+Never hand-wave dimensions: always pull from `assets/asset_specs.json`; for anything not in a spec, measure the vanilla file with `scripts/vanilla.py size <asset>` (needs the unpacked game content; `doctor.py` says whether it exists).
 
 ### Validate, build, deploy
 ```
-python "${CLAUDE_SKILL_DIR}/scripts/validate_mod.py" <modfolder>            # JSON, manifest, FromFile paths, image dims, i18n keys, ID prefixes
+python "${CLAUDE_SKILL_DIR}/scripts/validate_mod.py" <modfolder> [--fix] [--json]   # JSON, manifest, FromFile paths (token-expanded), image dims, i18n, ID prefixes, game-model field names, texture/index/NPC/item/dependency cross-checks
 dotnet build                                          # C#: ModBuildConfig auto-deploys to Mods
 python "${CLAUDE_SKILL_DIR}/scripts/deploy.py" <modfolder> [--zip]          # JSON packs: copy to Mods; --zip makes a release zip
 ```

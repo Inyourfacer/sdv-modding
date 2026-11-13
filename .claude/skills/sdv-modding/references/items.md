@@ -56,17 +56,17 @@ Also add the seed and produce to `Data/Objects` (seed Category −74, Type "Seed
 
 ## Furniture — `Data/Furniture` (slash string)
 `"{{ModId}}_Table": "{{ModId}}_Table/table/2 2/2 1/1/500/-1/{{i18n:table.name}}/0/Mods\\{{ModId}}\\Furniture"`
-Fields: name / type / sprite size in tiles / bounding box in tiles / rotations / price / placement restriction / display name / sprite index / texture / off-limits-for-random-sale / context tags. Verify against exported vanilla.
+Fields (checked against the unpacked game: `Oak Chair/chair/-1/-1/4/350/-1/[LocalizedText Strings\\Furniture:OakChair]`): name / type / sprite size in tiles (-1 = default) / bounding box in tiles (-1 = default) / rotations / price / placement restriction (-1 = any) / display name, then optionally sprite index / texture / off-limits-for-random-sale / context tags. The tail fields are not used by vanilla entries; copy one from a mod that uses them.
 
 ## Clothing & hats & weapons
 - `Data/Shirts`, `Data/Pants`: models with `Texture`, `SpriteIndex`, `CanBeDyed`, `DefaultColor`, `IsPrismatic`.
-- `Data/hats`: slash string `name/description/showRealHair/skipHairstyleOffset/tags/displayName/spriteIndex/texture`. Verify field order.
+- `Data/hats`: slash string `name/description/showRealHair/skipHairstyleOffset/tags/displayName` (checked: `Cowboy Hat/<description>/false/true//Cowboy Hat`), with `spriteIndex/texture` appended for custom sheets (not used by vanilla entries).
 - `Data/Weapons`: model with `Name`, `DisplayName`, `Description`, `MinDamage`, `MaxDamage`, `Knockback`, `Speed`, `Precision`, `Defense`, `Type` (0 stab, 1 dagger, 2 club, 3 sword), `AreaOfEffect`, `CritChance`, `CritMultiplier`, `Texture`, `SpriteIndex`.
 For full outfit/hair/accessory freedom use Fashion Sense (`fashion-sense-alt-textures.md`).
 
 ## Recipes
 `Data/CookingRecipes`, `Data/CraftingRecipes` (slash strings):
-`"{{ModId}}_Jam": "613 3 245 1/10 10/{{ModId}}_Jam/default/{{i18n:jam.name}}"` → ingredients `<id> <count>…` / unused / output id [count] / unlock condition (`default`, `f <NPC> <hearts>`, `s <skill> <level>`, `none`) / display name. Crafting recipes for big craftables have `true` as 4th field (is big craftable) and unlock as 5th — verify. Teach via mail `%item cookingRecipe <key> %%` or trigger action `MarkCookingRecipeKnown`/`MarkCraftingRecipeKnown`.
+`"{{ModId}}_Jam": "613 3 245 1/10 10/{{ModId}}_Jam/default/{{i18n:jam.name}}"` → ingredients `<id> <count>…` / unused / output id [count] / unlock condition (`default`, `f <NPC> <hearts>`, `s <skill> <level>`, `none`) / display name. Crafting recipes are `ingredients/Home/yield/isBigCraftable/unlock/displayName` (checked: `Chest` = `388 50/Home/130/true/default/`; `Wood Fence` = `388 2/Field/322/false/default/`, where the second field is the crafting location, `Home` or `Field`); for a big craftable the yield is the big-craftable ID. Teach via mail `%item cookingRecipe <key> %%` or trigger action `MarkCookingRecipeKnown`/`MarkCraftingRecipeKnown`.
 
 ## Shops — `Data/Shops`
 Add with `TargetField: ["<ShopId>", "Items"]` (vanilla IDs: `SeedShop`, `Carpenter`, `Blacksmith`, `Saloon`, `FishShop`, `AnimalShop`, `Hospital`, `Sandy`, `DesertTrade`, `IslandTrade`, `Joja`, `AdventureShop`, `Dwarf`, `Krobus`, `HatMouse`, `Traveler`…). New shop: new key + `Owners` + open it with a map tile `Action OpenShop {{ModId}}_Shop`.

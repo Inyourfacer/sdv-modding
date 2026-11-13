@@ -1,6 +1,6 @@
 # Asset pipeline: placeholder → ComfyUI → game-ready sheet
 
-Specs live in `assets/asset_specs.json` (keys: `portrait`, `portrait_hd`, `character_sprite`, `object_icon`, `big_craftable`, `crop`, `fruit_tree`, `furniture`, `hat`, `shirt`, `fs_hair`, `fs_accessory`, `alt_texture`, `tilesheet`, `building`). Override per asset with `--frame WxH --cols N --rows N`. If the spec has `"verify": true`, unpack the game first (StardewXnbHack → `Content (unpacked)/`) and match the vanilla layout.
+Specs live in `assets/asset_specs.json` (keys: `portrait`, `portrait_hd`, `character_sprite`, `object_icon`, `big_craftable`, `crop`, `fruit_tree`, `furniture`, `hat`, `shirt`, `fs_hair`, `fs_accessory`, `alt_texture`, `tilesheet`, `building`). Override per asset with `--frame WxH --cols N --rows N`. Each spec's `vanilla_ref` names the vanilla sheet its layout was measured from; `python vanilla.py specs` re-checks every rule against the unpacked game, and `vanilla.py size <asset>` measures any other vanilla image.
 
 ## 1. Placeholder
 ```

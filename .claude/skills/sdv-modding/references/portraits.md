@@ -44,7 +44,7 @@ Recommended HD route on 1.6. Two install forms; both use the same files:
 Rules:
 - File name = the NPC's name as the game shows it in dialogue (e.g. `Leo.png`, not the internal `ParrotBoy`). For mod NPCs check what the dialogue box displays.
 - Frame size is inferred from width / 2; any square size works (128, 256, 512). Keep all files in one folder at the same frame size.
-- Variant suffixes: `_<season>` lowercase (`_spring`, `_winter`), `_<LocationName>` (`_IslandSouth` for beach outfits). Verify suffix behavior against the current Portraiture mod page if adding new variant kinds.
+- Variant suffixes: `_<season>` lowercase (`_spring`, `_winter`), `_<LocationName>` (`_IslandSouth` for beach outfits). The suffix rules come from the Portraiture mod, not the game files: read its current page before adding new variant kinds.
 - Players switch portrait sets in-game with the Portraiture hotkey (default `P`) during dialogue.
 
 ## 3. HD Portraits (tlitookilakin) via Content Patcher

@@ -1,138 +1,341 @@
 {
-  "_doc": "Single source of truth for SDV 1.6 image specs. frame_w/frame_h in game pixels. Sheets are row-major: frame index = row*cols + col. gen_w/gen_h = SDXL-bucket generation size per frame. 'verify': true means measure the unpacked vanilla file before relying on the layout.",
-
+  "_doc": "Single source of truth for SDV 1.6 image specs. frame_w/frame_h in game pixels. Sheets are row-major: frame index = row*cols + col. gen_w/gen_h = SDXL-bucket generation size per frame. 'vanilla_ref' names the vanilla sheet the layout was measured from (python vanilla.py specs re-checks every rule against the unpacked game).",
   "portrait": {
     "desc": "Vanilla dialogue portrait sheet",
-    "frame_w": 64, "frame_h": 64, "cols": 2, "rows": 3,
-    "frame_labels": ["neutral", "happy", "sad", "unique", "love", "angry"],
+    "frame_w": 64,
+    "frame_h": 64,
+    "cols": 2,
+    "rows": 3,
+    "frame_labels": [
+      "neutral",
+      "happy",
+      "sad",
+      "unique",
+      "love",
+      "angry"
+    ],
     "game_asset": "Portraits/{NPC}",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "bottom", "remove_bg": false, "colors": "portrait_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "bottom",
+    "remove_bg": false,
+    "colors": "portrait_colors",
     "prompt": "portrait of {subject}, head and shoulders, facing viewer, {expression} expression, flat background",
-    "notes": "Dialogue $0-$5 / $h $s $u $l $a map to frames 0-5. Extra rows allowed (index 6+, used via $N). Width must stay 128."
+    "notes": "Dialogue $0-$5 / $h $s $u $l $a map to frames 0-5. Extra rows allowed (index 6+, used via $N). Width must stay 128.",
+    "vanilla_ref": {
+      "asset": "Portraits/Abigail",
+      "rule": "w == 128 and h % 64 == 0",
+      "note": "128 wide, height a multiple of 64 (vanilla sheets hold more than the 6 standard frames: Abigail is 10)"
+    }
   },
   "portrait_hd": {
     "desc": "Portraiture / HD portrait sheet (same layout, larger frames)",
-    "frame_w": 128, "frame_h": 128, "cols": 2, "rows": 3,
-    "frame_labels": ["neutral", "happy", "sad", "unique", "love", "angry"],
+    "frame_w": 128,
+    "frame_h": 128,
+    "cols": 2,
+    "rows": 3,
+    "frame_labels": [
+      "neutral",
+      "happy",
+      "sad",
+      "unique",
+      "love",
+      "angry"
+    ],
     "game_asset": "Mods/Portraiture/Portraits/{Folder}/{NPC}.png",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "bottom", "remove_bg": false, "colors": "portrait_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "bottom",
+    "remove_bg": false,
+    "colors": "portrait_colors",
     "prompt": "portrait of {subject}, head and shoulders, facing viewer, {expression} expression, flat background",
     "notes": "frame size may be 128, 256 or 512 (pass --frame). Portraiture infers frame size from sheet width / 2."
   },
   "character_sprite": {
     "desc": "NPC/character walking sprite sheet",
-    "frame_w": 16, "frame_h": 32, "cols": 4, "rows": 4,
-    "frame_labels": ["down_0","down_1","down_2","down_3","right_0","right_1","right_2","right_3","up_0","up_1","up_2","up_3","left_0","left_1","left_2","left_3"],
+    "frame_w": 16,
+    "frame_h": 32,
+    "cols": 4,
+    "rows": 4,
+    "frame_labels": [
+      "down_0",
+      "down_1",
+      "down_2",
+      "down_3",
+      "right_0",
+      "right_1",
+      "right_2",
+      "right_3",
+      "up_0",
+      "up_1",
+      "up_2",
+      "up_3",
+      "left_0",
+      "left_1",
+      "left_2",
+      "left_3"
+    ],
     "game_asset": "Characters/{NPC}",
-    "gen_w": 704, "gen_h": 1408, "anchor": "bottom", "remove_bg": true, "colors": "sprite_colors",
+    "gen_w": 704,
+    "gen_h": 1408,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "sprite_colors",
     "prompt": "full body pixel art sprite of {subject}, {direction} view, walking pose, chibi proportions, plain white background",
-    "notes": "Rows: 0 down, 1 right, 2 up, 3 left. Vanilla NPC sheets add more rows for animations (indices referenced from schedules/Data/animationDescriptions). Feet sit on the bottom pixel row. Children/small NPCs may use 16x16 or 16x24 frames — pass --frame.",
-    "verify": false
+    "notes": "Rows: 0 down, 1 right, 2 up, 3 left. Vanilla NPC sheets add more rows for animations (indices referenced from schedules/Data/animationDescriptions). Feet sit on the bottom pixel row. Children/small NPCs may use 16x16 or 16x24 frames \u2014 pass --frame.",
+    "vanilla_ref": {
+      "asset": "Characters/Abigail",
+      "rule": "w == 64 and h % 32 == 0",
+      "note": "64 wide, height a multiple of 32 (the 4 walking rows come first; vanilla adds animation rows below)"
+    }
   },
   "object_icon": {
     "desc": "Object / item icon (Data/Objects, weapons, tools icons)",
-    "frame_w": 16, "frame_h": 16, "cols": 1, "rows": 1,
+    "frame_w": 16,
+    "frame_h": 16,
+    "cols": 1,
+    "rows": 1,
     "game_asset": "Mods/{ModId}/Objects (custom sheet, SpriteIndex = frame index)",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "center", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "center",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "single {subject} item icon, pixel art game item, centered, plain white background",
-    "notes": "Custom item sheets may be any width that is a multiple of 16; SpriteIndex counts left-to-right, top-to-bottom."
+    "notes": "Custom item sheets may be any width that is a multiple of 16; SpriteIndex counts left-to-right, top-to-bottom.",
+    "vanilla_ref": {
+      "asset": "Maps/springobjects",
+      "rule": "w == 384 and h % 16 == 0",
+      "note": "384 wide = 24 columns of 16x16; SpriteIndex counts left to right, top to bottom"
+    }
   },
   "big_craftable": {
     "desc": "Big craftable / machine",
-    "frame_w": 16, "frame_h": 32, "cols": 1, "rows": 1,
+    "frame_w": 16,
+    "frame_h": 32,
+    "cols": 1,
+    "rows": 1,
     "game_asset": "Mods/{ModId}/BigCraftables",
-    "gen_w": 704, "gen_h": 1408, "anchor": "bottom", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 704,
+    "gen_h": 1408,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject}, pixel art game machine, front view, plain white background",
-    "notes": "Machines with working animation use consecutive indices (e.g. idle + working frames)."
+    "notes": "Machines with working animation use consecutive indices (e.g. idle + working frames).",
+    "vanilla_ref": {
+      "asset": "TileSheets/Craftables",
+      "rule": "w == 128 and h % 32 == 0",
+      "note": "128 wide = 8 columns of 16x32"
+    }
   },
   "crop": {
     "desc": "Crop growth row",
-    "frame_w": 16, "frame_h": 32, "cols": 8, "rows": 1,
-    "frame_labels": ["seed_a","seed_b","phase_1","phase_2","phase_3","phase_4","ready","ready_alt"],
+    "frame_w": 16,
+    "frame_h": 32,
+    "cols": 8,
+    "rows": 1,
+    "frame_labels": [
+      "phase_0",
+      "phase_1",
+      "phase_2",
+      "phase_3",
+      "phase_4",
+      "phase_5",
+      "phase_6",
+      "phase_7"
+    ],
     "game_asset": "Mods/{ModId}/Crops (Data/Crops Texture + SpriteIndex = row)",
-    "gen_w": 704, "gen_h": 1408, "anchor": "bottom", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 704,
+    "gen_h": 1408,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject} plant, growth stage {stage}, pixel art crop in soil, side view, plain white background",
-    "notes": "One 128x32 row per crop. Number of phase frames used = DaysInPhase length; unused phase slots may stay empty. Last slot used for tinted/alt harvest sprites. Verify against TileSheets/crops.",
-    "verify": true
+    "notes": "One 128x32 cell per crop (the vanilla sheet holds two cells per 256 px row; Data/Crops SpriteIndex counts cells). A crop uses len(DaysInPhase)+2 columns: one per growth phase, then the harvestable sprite, then one more (the harvested/regrow or tint frame); columns after that stay empty. Measured on parsnip (4 phases -> 6 columns) and cauliflower (5 phases -> 7 columns).",
+    "vanilla_ref": {
+      "asset": "TileSheets/crops",
+      "rule": "w == 256 and h % 32 == 0",
+      "note": "256 wide = two crop cells of 128x32 per row; SpriteIndex counts 128x32 cells"
+    }
   },
   "fruit_tree": {
     "desc": "Fruit tree row",
-    "frame_w": 48, "frame_h": 80, "cols": 9, "rows": 1,
+    "frame_w": 48,
+    "frame_h": 80,
+    "cols": 9,
+    "rows": 1,
     "game_asset": "Mods/{ModId}/FruitTrees",
-    "gen_w": 832, "gen_h": 1216, "anchor": "bottom", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 832,
+    "gen_h": 1216,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject} fruit tree, {stage}, pixel art, plain white background",
-    "notes": "Growth stages then seasonal mature frames and stump. Verify order against TileSheets/fruitTrees before generating.",
-    "verify": true
+    "notes": "432x80 per tree (9 frames of 48x80); Data/FruitTrees TextureSpriteRow counts 80 px rows (vanilla sheet: 9 trees, 432x720). Frame order inside a row is not documented in the game files: copy a vanilla row as the guide before drawing.",
+    "vanilla_ref": {
+      "asset": "TileSheets/fruitTrees",
+      "rule": "w == 432 and h % 80 == 0",
+      "note": "432 wide = 9 frames of 48x80; one tree per 80 px row (TextureSpriteRow)"
+    }
   },
   "furniture": {
     "desc": "Furniture (size set in tiles)",
-    "frame_w": 16, "frame_h": 16, "cols": 1, "rows": 1,
+    "frame_w": 16,
+    "frame_h": 16,
+    "cols": 1,
+    "rows": 1,
     "game_asset": "Mods/{ModId}/Furniture",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "bottom", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject}, pixel art furniture, three-quarter top-down view, plain white background",
     "notes": "Pass --frame WxH as tilesWide*16 x tilesHigh*16 (e.g. 32x32 for a 2x2 table). Rotatable furniture needs one frame per rotation laid out left to right."
   },
   "hat": {
     "desc": "Hat (4 directions stacked vertically)",
-    "frame_w": 20, "frame_h": 20, "cols": 1, "rows": 4,
-    "frame_labels": ["down","right","left","up"],
+    "frame_w": 20,
+    "frame_h": 20,
+    "cols": 1,
+    "rows": 4,
+    "frame_labels": [
+      "down",
+      "right",
+      "left",
+      "up"
+    ],
     "game_asset": "Mods/{ModId}/Hats",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "bottom", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject} hat, {direction} view, pixel art, plain white background",
-    "notes": "Each hat is a 20x80 strip. Verify direction order against Characters/Farmer/hats.",
-    "verify": true
+    "notes": "Each hat is a 20x80 strip (4 directions of 20x20 stacked); the vanilla sheet lays hats out 12 per row (240x880). Direction order inside the strip was not measured: copy a vanilla hat as the guide.",
+    "vanilla_ref": {
+      "asset": "Characters/Farmer/hats",
+      "rule": "w % 20 == 0 and h % 80 == 0",
+      "note": "grid of 20 px columns; each hat is a 20x80 strip (4 directions of 20x20 stacked)"
+    }
   },
   "shirt": {
     "desc": "Shirt (vanilla Data/Shirts sprite)",
-    "frame_w": 8, "frame_h": 8, "cols": 1, "rows": 4,
-    "frame_labels": ["front","right","left","back"],
+    "frame_w": 8,
+    "frame_h": 8,
+    "cols": 1,
+    "rows": 4,
+    "frame_labels": [
+      "front",
+      "right",
+      "left",
+      "back"
+    ],
     "game_asset": "Mods/{ModId}/Shirts",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "center", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "center",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject} shirt torso, {direction} view, pixel art, plain white background",
     "notes": "Dyeable shirts have a matching mask 128px to the right on the vanilla sheet. For anything beyond vanilla shirts use Fashion Sense.",
-    "verify": true
+    "vanilla_ref": {
+      "asset": "Characters/Farmer/shirts",
+      "rule": "w == 256 and h % 32 == 0",
+      "note": "256 wide: 128 px of shirts (8 px wide, 4 directions of 8x8 stacked) plus the dye mask 128 px to the right"
+    }
   },
   "fs_hair": {
     "desc": "Fashion Sense hair (front/right/left/back)",
-    "frame_w": 16, "frame_h": 32, "cols": 4, "rows": 1,
-    "frame_labels": ["front","right","left","back"],
+    "frame_w": 16,
+    "frame_h": 32,
+    "cols": 4,
+    "rows": 1,
+    "frame_labels": [
+      "front",
+      "right",
+      "left",
+      "back"
+    ],
     "game_asset": "[FS] pack Hairs/<Name>/hair.png",
-    "gen_w": 704, "gen_h": 1408, "anchor": "bottom", "remove_bg": true, "colors": "sprite_colors",
+    "gen_w": 704,
+    "gen_h": 1408,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "sprite_colors",
     "prompt": "{subject} hairstyle only, {direction} view, pixel art, no face, plain white background",
     "notes": "Match HairSize and StartingPosition in hair.json to the layout you produce."
   },
   "fs_accessory": {
     "desc": "Fashion Sense accessory",
-    "frame_w": 16, "frame_h": 16, "cols": 4, "rows": 1,
-    "frame_labels": ["front","right","left","back"],
+    "frame_w": 16,
+    "frame_h": 16,
+    "cols": 4,
+    "rows": 1,
+    "frame_labels": [
+      "front",
+      "right",
+      "left",
+      "back"
+    ],
     "game_asset": "[FS] pack Accessories/<Name>/accessory.png",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "center", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "center",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject} accessory, {direction} view, pixel art, plain white background",
     "notes": "Set AccessorySize in accessory.json to frame size."
   },
   "alt_texture": {
     "desc": "Alternative Textures variation strip",
-    "frame_w": 16, "frame_h": 32, "cols": 1, "rows": 3,
+    "frame_w": 16,
+    "frame_h": 32,
+    "cols": 1,
+    "rows": 3,
     "game_asset": "[AT] pack Textures/<Name>/texture.png",
-    "gen_w": 704, "gen_h": 1408, "anchor": "bottom", "remove_bg": true, "colors": "item_colors",
+    "gen_w": 704,
+    "gen_h": 1408,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "item_colors",
     "prompt": "{subject} variant {n}, pixel art, plain white background",
-    "notes": "frame = TextureWidth x TextureHeight of the target, rows = Variations (stacked vertically).",
-    "verify": true
+    "notes": "frame = TextureWidth x TextureHeight of the target, rows = Variations (stacked vertically). Frame size and variation layout follow the target asset's own vanilla frame size."
   },
   "tilesheet": {
     "desc": "Map tilesheet",
-    "frame_w": 16, "frame_h": 16, "cols": 16, "rows": 16,
+    "frame_w": 16,
+    "frame_h": 16,
+    "cols": 16,
+    "rows": 16,
     "game_asset": "Maps/z_{ModId}_tiles (referenced by the .tmx)",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "center", "remove_bg": false, "colors": "tile_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "center",
+    "remove_bg": false,
+    "colors": "tile_colors",
     "prompt": "seamless {subject} tile texture, top-down view, pixel art game tileset",
     "notes": "Generate per-tile or per-object chunk; seamless ground tiles benefit from img2img on a tiled placeholder. Keep tilesheet dimensions fixed once maps reference it (tile indices depend on width)."
   },
   "building": {
     "desc": "Farm building exterior",
-    "frame_w": 48, "frame_h": 64, "cols": 1, "rows": 1,
+    "frame_w": 48,
+    "frame_h": 64,
+    "cols": 1,
+    "rows": 1,
     "game_asset": "Buildings/{ModId}_<Name> (Data/Buildings Texture)",
-    "gen_w": 1024, "gen_h": 1024, "anchor": "bottom", "remove_bg": true, "colors": "tile_colors",
+    "gen_w": 1024,
+    "gen_h": 1024,
+    "anchor": "bottom",
+    "remove_bg": true,
+    "colors": "tile_colors",
     "prompt": "{subject} farm building exterior, pixel art, three-quarter top-down view, plain white background",
-    "notes": "Width = Size.X*16. Height = Size.Y*16 + roof overhang. Pass --frame WxH."
+    "notes": "Width = Size.X*16. Height = Size.Y*16 + roof overhang. Pass --frame WxH.",
+    "vanilla_ref": {
+      "asset": "Buildings/Barn",
+      "rule": "w % 16 == 0",
+      "note": "width = Size.X x 16 (Barn: 7 x 16 = 112); height = Size.Y x 16 plus the roof overhang"
+    }
   }
 }

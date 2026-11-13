@@ -180,7 +180,7 @@ def detect_game(cfg: dict) -> dict:
         if "custom --mods-path" in head:
             r["launched_with_custom_mods_path"] = True
     unpacked = None
-    for c in (cfg.get("unpacked_content"), game / "Content (unpacked)", game.parent / "Content (unpacked)"):
+    for c in (cfg.get("unpacked_content"), Path.home() / ".sdv-skill" / "Content (unpacked)", game / "Content (unpacked)", game.parent / "Content (unpacked)"):
         if c and Path(c).is_dir():
             unpacked = str(c); break
     r["unpacked_content"] = unpacked

@@ -13,13 +13,14 @@ Exit code 1 if any ERROR.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
 
 from PIL import Image
 
-from sdvlib import load_json, normalize_manifest
+from sdvlib import find_project, load_config, load_json, load_project, mods_path, normalize_manifest
 
 KNOWN_PACKS = {
     "pathoschild.contentpatcher": "cp", "platonymous.portraiture": "portraiture",
@@ -36,13 +37,21 @@ IMG_TARGETS = [  # (target regex, width rule, height multiple, description)
 ]
 
 
+DEEP = True            # cross-reference checks (vcheck.py); --no-deep switches them off
+CONTEXT = {"vanilla": None, "mods_dirs": [], "hd_portraits": set()}
+
+
 class Report:
     def __init__(self):
         self.items = []
+        self.fixable = []       # (kind, a, b) things --fix can repair without guessing
 
     def err(self, where, msg): self.items.append(("ERROR", where, msg))
     def warn(self, where, msg): self.items.append(("WARN", where, msg))
     def info(self, where, msg): self.items.append(("INFO", where, msg))
+
+    def to_json(self):
+        return [{"level": l, "where": w, "message": m} for l, w, m in self.items]
 
     def print(self):
         for lvl, where, msg in self.items:
@@ -83,6 +92,10 @@ def check_image(path: Path, target: str, rep: Report, where: str):
     for rx, wrule, hmul, desc in IMG_TARGETS:
         if rx.search(target) and "{{" not in target:
             w, h = im.size
+            if desc.startswith("portrait") and path.resolve() in CONTEXT["hd_portraits"]:
+                if w % 2 or h % (w // 2):          # an asset the project lists as an HD portrait: any square frame size, 2 per row
+                    rep.err(where, f"{path.name} is {w}x{h}: an HD portrait sheet needs 2 square frames per row (height a multiple of width/2)")
+                continue
             if not wrule(w) or h % hmul:
                 rep.err(where, f"{path.name} is {w}x{h}: {desc}")
 
@@ -161,6 +174,7 @@ def check_cp(root: Path, man: dict, rep: Report):
     missing = sorted(k for k in used_i18n if k not in i18n_def)
     if missing:
         rep.err("i18n/default.json", f"{len(missing)} key(s) used but not defined: {', '.join(missing[:15])}{' …' if len(missing) > 15 else ''}")
+        rep.fixable += [("i18n", k, None) for k in missing]
     unused = sorted(k for k in i18n_def if k not in used_i18n)
     if unused and used_i18n:
         rep.info("i18n/default.json", f"{len(unused)} key(s) defined but not referenced in JSON (may be used elsewhere): {', '.join(unused[:10])}")
@@ -170,6 +184,16 @@ def check_cp(root: Path, man: dict, rep: Report):
             extra = [k for k in d if k not in i18n_def]
             if extra:
                 rep.warn(f"i18n/{lang.name}", f"keys not in default.json: {', '.join(extra[:10])}")
+
+
+def deep_cp(root: Path, man: dict, rep: Report):
+    if not DEEP:
+        return
+    try:
+        from vcheck import Deep
+        Deep(root, man, rep, CONTEXT["vanilla"], CONTEXT["mods_dirs"]).run()
+    except Exception as ex:   # a bug in a deep check must never hide the basic results
+        rep.info("deep checks", f"skipped because of an internal error: {ex}")
 
 
 def check_fs(root: Path, rep: Report):
@@ -324,6 +348,7 @@ def check_mod(root: Path, rep: Report):
     kind = KNOWN_PACKS.get((cpf or {}).get("UniqueID", "").lower()) if cpf else None
     if kind == "cp":
         check_cp(root, man, rep)
+        deep_cp(root, man, rep)
     elif kind == "fs":
         check_fs(root, rep)
     elif kind == "at":
@@ -338,21 +363,84 @@ def check_mod(root: Path, rep: Report):
             read_json(root / "i18n" / "default.json", rep)
     for junk in list(root.rglob("*_preview.png")) + list(root.rglob("Thumbs.db")) + list(root.rglob(".DS_Store")):
         rep.warn(str(junk.relative_to(root)), "stray file will ship with the mod")
+        rep.fixable.append(("delete", str(junk), None))
+
+
+def apply_fixes(root: Path, rep: Report) -> list[str]:
+    """Only unambiguous repairs: stub missing i18n keys, delete stray preview/OS files. Originals go to <mod parent>/backups/."""
+    import cptext
+    from datetime import datetime
+    done = []
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    keys = sorted({a for k, a, _ in rep.fixable if k == "i18n"})
+    if keys:
+        f = root / "i18n" / "default.json"
+        text = f.read_text(encoding="utf-8") if f.exists() else "{}\n"
+        if f.exists():
+            bk = root.parent / "backups" / stamp / root.name / "i18n" / "default.json"
+            bk.parent.mkdir(parents=True, exist_ok=True)
+            bk.write_bytes(f.read_bytes())
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(cptext.insert_in_object(text, {k: "TODO: " + k for k in keys}), encoding="utf-8")
+        done.append(f"i18n/default.json: added {len(keys)} stub key(s) marked 'TODO: ...'")
+    for kind, path, _ in rep.fixable:
+        if kind == "delete" and Path(path).exists():
+            Path(path).unlink()
+            done.append(f"deleted {Path(path).name}")
+    return done
 
 
 def main():
-    ap = argparse.ArgumentParser()
+    global DEEP
+    ap = argparse.ArgumentParser(description="Static checks for a Stardew mod folder: manifest, JSON, Content Patcher references, images, framework packs.")
     ap.add_argument("path")
     ap.add_argument("--recursive", action="store_true", help="validate every mod folder below path")
+    ap.add_argument("--json", action="store_true", help="machine-readable results")
+    ap.add_argument("--fix", action="store_true", help="repair only the unambiguous things (stub missing i18n keys, delete stray files), then re-check")
+    ap.add_argument("--no-deep", action="store_true", help="skip the cross-reference checks (vcheck.py)")
+    ap.add_argument("--mods-dir", action="append", default=[], help="Mods folder(s) to look for dependencies in (default: from the config)")
+    ap.add_argument("--root", help="unpacked game content (default: from the config / ~/.sdv-skill)")
     a = ap.parse_args()
+    DEEP = not a.no_deep
+    try:
+        from vanilla import Vanilla
+        cfg = load_config()
+        CONTEXT["vanilla"] = Vanilla(a.root, cfg)
+        dirs = [Path(d) for d in a.mods_dir] or [mods_path(cfg), Path.home() / "AppData" / "Roaming" / "Stardrop" / "Data" / "Selected Mods"]
+        CONTEXT["mods_dirs"] = dirs
+        pp = find_project()
+        if pp:
+            for asset in (load_project(pp) or {}).get("assets", []):
+                is_hd = asset.get("spec") == "portrait_hd" or any(t.get("kind") == "portraiture" for t in asset.get("targets") or []) and not any(t.get("kind") == "vanilla" for t in asset.get("targets") or [])
+                if is_hd:
+                    for f in asset.get("files", []):
+                        CONTEXT["hd_portraits"].add((pp.parent / f).resolve())
+    except Exception:
+        pass
     root = Path(a.path)
     mods = [p.parent for p in root.rglob("manifest.json")] if a.recursive else [root]
-    total = 0
+    total, out = 0, []
     for m in mods:
-        print(f"=== {m}")
         rep = Report()
         check_mod(m, rep)
-        total += rep.print()
+        fixed = []
+        if a.fix and rep.fixable:
+            fixed = apply_fixes(m, rep)
+            rep = Report()
+            check_mod(m, rep)
+        if a.json:
+            out.append({"mod": str(m), "errors": sum(1 for i in rep.items if i[0] == "ERROR"), "warnings": sum(1 for i in rep.items if i[0] == "WARN"),
+                        "results": rep.to_json(), "fixed": fixed, "fixable": len(rep.fixable)})
+            total += out[-1]["errors"]
+        else:
+            print(f"=== {m}")
+            for f in fixed:
+                print(f"[FIXED] {f}")
+            total += rep.print()
+            if rep.fixable and not a.fix:
+                print(f"{len(rep.fixable)} item(s) can be repaired automatically: re-run with --fix")
+    if a.json:
+        print(json.dumps(out if a.recursive else out[0], indent=2))
     sys.exit(1 if total else 0)
 
 
