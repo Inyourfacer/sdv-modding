@@ -12,6 +12,7 @@
   python add.py shop         --mod ... --name "Island Store" --items "Moonberry Jam:300,(O)388:20"
   python add.py mail         --mod ... --name Welcome --text "Hello!" [--item "(O)72 1"] [--condition "PLAYER_HEARTS Current X 2"]
   python add.py event        --mod ... --name Intro --location Town --npc Mira
+  python add.py location     --mod ... --name Cottage --door "60 70" [--target-map Town] [--like Trailer --size 12x9]
   python add.py portrait-set --out <dir> --name "My Portraits" --npcs Abigail,Leo --frame 256
   python add.py sid-sprite   --mod "[SID] My Sprites" --npc "Characters/Me.MyMod_Mira" --scale 8
 
@@ -186,7 +187,8 @@ class Mod:
         r = subprocess.run([sys.executable, str(HERE / "project.py"), "sync", "--root", str(self.root)], capture_output=True, text=True, cwd=self.root)
         print(r.stdout.strip().splitlines()[-1] if r.stdout.strip() else "")
         if validate:
-            v = subprocess.run([sys.executable, str(HERE / "validate_mod.py"), str(self.dir)], capture_output=True, text=True)
+            v = subprocess.run([sys.executable, str(HERE / "validate_mod.py"), str(self.dir)] + (["--root", self.content_root] if getattr(self, "content_root", None) else []),
+                               capture_output=True, text=True)
             print(v.stdout.strip().splitlines()[-1] if v.stdout.strip() else "")
             if v.returncode != 0:
                 print(v.stdout)
@@ -423,6 +425,46 @@ def cmd_npc(mod: Mod, a):
         save_project(proj, pp)
 
 
+def cmd_location(mod: Mod, a):
+    """A new indoor location: starter .tmx (from another map's tilesheets), Data/Locations, a warp from the target map and one back."""
+    import tmx
+    from vanilla import Vanilla
+    v = Vanilla(a.root)
+    mod.content_root = a.root                   # validate against the same game content the map was built from
+    if not v.available:
+        die("the game content is not unpacked, so there are no vanilla tilesheets to build the map from (see references/validation.md)")
+    n, rid, k = slug(a.name), mod.rid(a.name), key(a.name)
+    mod.claim(rid, "location")
+    w, h = [int(x) for x in re.split(r"[xX,]", a.size)]
+    dx, dy = [int(x) for x in re.split(r"[ ,]", a.door.strip())]
+    ax, ay = [int(x) for x in re.split(r"[ ,]", a.arrive.strip())] if a.arrive else (w // 2, h - 2)
+    back_loc, bx, by = (a.back.split() + [None, None])[:3] if a.back else (a.target_map, str(dx), str(dy + 1))
+    tm = tmx.new_like((w, h), a.like, v)
+    tm.props["Warp"] = f"{ax} {h} {back_loc} {bx} {by}"                   # the exit sits one tile below the last row
+    rel = f"assets/Maps/{n}.tmx"
+    mod.log(f"write {rel} ({w}x{h}, tilesheets of {a.like})")
+    if not mod.dry:
+        p = mod.dir / rel
+        if p.exists() and not mod.force:
+            die(f"{rel} already exists (use --force)")
+        tm.save(p)
+    entry = {"DisplayName": f"{{{{i18n:{k}.name}}}}", "DefaultArrivalTile": {"X": ax, "Y": ay},
+             "CreateOnLoad": {"MapPath": f"Maps/{rid}", "AlwaysActive": False}}
+    mod.check("Data/Locations", {rid: entry})
+    mod.i18n({f"{k}.name": a.display or a.name})
+    mod.data_file(f"data/Locations/{n}.json", [
+        {"Action": "Load", "Target": f"Maps/{rid}", "FromFile": rel},
+        {"Action": "EditData", "Target": "Data/Locations", "Entries": {rid: entry}},
+        {"Action": "EditMap", "Target": f"Maps/{a.target_map}", "AddWarps": [f"{dx} {dy} {rid} {ax} {ay}"]}])
+    if not mod.dry:
+        r = subprocess.run([sys.executable, str(HERE / "tmx.py"), "check", str(mod.dir / rel), "--mod", str(mod.dir)] + (["--root", a.root] if a.root else []),
+                           capture_output=True, text=True)
+        print("tmx check: " + (r.stdout.strip().splitlines() or ["?"])[-1])
+        if r.returncode != 0:
+            print(r.stdout)
+    print(f"open it from {a.target_map} at tile {dx},{dy}; the map has no walls, furniture or Action tiles yet: edit it in Tiled, or patch with EditMap MapTiles. Preview: python tmx.py render \"{mod.dir / rel}\" --out preview.png")
+
+
 def cmd_portrait_set(a):
     out = Path(a.out) / f"[Portraiture] {a.name}"
     if out.exists() and not a.force:
@@ -497,6 +539,10 @@ def main():
     p = sub.add_parser("shop"); common(p); p.add_argument("--name", required=True); p.add_argument("--items", required=True, help='"Name or (O)id:price,..."')
     p = sub.add_parser("mail"); common(p); p.add_argument("--name", required=True); p.add_argument("--text", required=True); p.add_argument("--title"); p.add_argument("--item"); p.add_argument("--condition")
     p = sub.add_parser("event"); common(p); p.add_argument("--name", required=True); p.add_argument("--location", required=True); p.add_argument("--npc"); p.add_argument("--pre"); p.add_argument("--line")
+    p = sub.add_parser("location"); common(p); p.add_argument("--name", required=True); p.add_argument("--display"); p.add_argument("--door", required=True, help='tile on the target map, "x y"')
+    p.add_argument("--target-map", default="Town"); p.add_argument("--like", default="Trailer", help="vanilla map whose tilesheets and floor the new map starts from")
+    p.add_argument("--size", default="12x9"); p.add_argument("--arrive", help='arrival tile inside the new map, "x y" (default: bottom centre)')
+    p.add_argument("--back", help='where the exit leads, "Location x y" (default: just below the door)'); p.add_argument("--root", help="unpacked game content")
     p = sub.add_parser("portrait-set"); common(p, mod=False); p.add_argument("--out", required=True); p.add_argument("--name", required=True); p.add_argument("--npcs", required=True)
     p.add_argument("--frame", type=int, default=256); p.add_argument("--author")
     p = sub.add_parser("sid-sprite"); common(p); p.add_argument("--npc", required=True); p.add_argument("--scale", type=int, default=8)
@@ -506,7 +552,7 @@ def main():
         return cmd_portrait_set(a)
     mod = Mod(a.mod, a.dry_run, a.force)
     fn = {"npc": cmd_npc, "item": cmd_item, "big-craftable": cmd_big_craftable, "machine": cmd_machine, "crop": cmd_crop, "fruit-tree": cmd_fruit_tree,
-          "recipe": cmd_recipe, "shop-item": cmd_shop_item, "shop": cmd_shop, "mail": cmd_mail, "event": cmd_event, "sid-sprite": cmd_sid_sprite}[a.cmd]
+          "recipe": cmd_recipe, "shop-item": cmd_shop_item, "shop": cmd_shop, "mail": cmd_mail, "event": cmd_event, "sid-sprite": cmd_sid_sprite, "location": cmd_location}[a.cmd]
     fn(mod, a)
     mod.finish(validate=not a.no_validate and a.cmd != "sid-sprite")
     if mod.new_ids:

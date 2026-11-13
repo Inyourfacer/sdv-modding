@@ -40,6 +40,7 @@ Decide what the request touches, then read only the matching reference file(s):
 | Testing in game, reading a SMAPI log, "my mod won't load" | `references/testing.md` |
 | Validator output, vanilla sizes/ids/data, unpacking the game content | `references/validation.md` |
 | Maps, Tiled, locations, warps, farm types, buildings | `references/maps-buildings.md` |
+| Installing/using Tiled, Aseprite, StardewXnbHack, ILSpy | `references/tool-setup.md` |
 | Any image asset (placeholder, generation, post-processing) | `references/asset-pipeline.md` + `assets/asset_specs.json` |
 | Characters: portraits, outfits, sprites, reference sheets, style choice, takes | `references/art-recipes.md` |
 
@@ -55,10 +56,10 @@ Then fill in content following the reference docs. Prefix every custom ID with `
 ### Adding content (one command each)
 Prefer the generators over hand-writing JSON for the common requests; each writes the patch file, i18n keys, placeholder art and project registration, appends one `Include` (the author's files are not reformatted), refuses an existing ID, backs up what it edits, and validates:
 ```
-python "${CLAUDE_SKILL_DIR}/scripts/add.py" npc|item|big-craftable|machine|crop|fruit-tree|recipe|shop-item|shop|mail|event|sid-sprite --mod "<[CP] folder>" --name ... [--dry-run]
+python "${CLAUDE_SKILL_DIR}/scripts/add.py" npc|item|big-craftable|machine|crop|fruit-tree|recipe|shop-item|shop|mail|event|location|sid-sprite --mod "<[CP] folder>" --name ... [--dry-run]
 python "${CLAUDE_SKILL_DIR}/scripts/add.py" portrait-set --out <dir> --name "My Portraits" --npcs Abigail,Leo --frame 256
 ```
-Field names come from the game's own data models (`assets/gamedata_fields.json`, regenerate with `gamedata_fields.py`; `gamedata.check_entry()` checks any entry). Not generated yet: furniture, hats/shirts/weapons, locations (needs the map tools). Event scripts are skeletons. Hand edits follow the reference files; check unfamiliar fields with `gamedata.py` before using them.
+Field names come from the game's own data models (`assets/gamedata_fields.json`, regenerate with `gamedata_fields.py`; `gamedata.check_entry()` checks any entry). Not generated yet: furniture, hats/shirts/weapons. `add.py location` builds a new indoor location with its map; maps can be inspected, edited and rendered with `scripts/tmx.py`. Event scripts are skeletons. Hand edits follow the reference files; check unfamiliar fields with `gamedata.py` before using them.
 
 ### Augmenting an existing mod
 1. Read `manifest.json`, `content.json` (and every `Include`d file), `i18n/`, and the asset folder before changing anything. For C#, read the csproj and ModEntry.

@@ -127,6 +127,7 @@ class Deep:
         self.dependencies()
         self.token_paths()
         self.text_formats()
+        self.maps()
 
     def duplicate_keys(self):
         seen = set()
@@ -408,6 +409,51 @@ class Deep:
                         cmds = [c.strip() for c in script.split("/") if c.strip()]
                         if not cmds or cmds[-1].split()[0] != "end":
                             self.rep.warn(w, f"event '{k.split('/')[0]}' does not finish with an 'end' command (the player would be stuck)")
+
+    def known_locations(self) -> set[str]:
+        known = set()
+        if self.v is not None and self.v.available:
+            known |= set((self.v.data("Data/Locations") or {}).keys())
+            known |= {Path(x).name for x in self.v.assets() if x.startswith("Maps/") and "/" not in x[5:]}
+        for rel, i, ch in self.changes:
+            if ch.get("Target") == "Data/Locations":
+                known |= {sub_modid(k, self.uid) for k in (ch.get("Entries") or {})}
+        return known
+
+    def maps(self):
+        """Every .tmx the pack ships (tilesheets exist, ids in range, layers, warps) and every AddWarps string."""
+        try:
+            import tmx
+        except Exception:
+            return
+        known = self.known_locations() if self.note_vanilla() else set()
+        for rel, i, ch in self.changes:
+            w = self.where(rel, i, ch)
+            ff = ch.get("FromFile")
+            if ff and str(ff).lower().endswith(".tmx") and "{{" not in str(ff):
+                path = self.root / str(ff)
+                if not path.exists():
+                    continue                                        # reported by the FromFile check
+                try:
+                    tm = tmx.TMap.load(path)
+                except SystemExit as ex:
+                    self.rep.err(w, f"{ff}: {ex}")
+                    continue
+                patch = ch.get("Action") == "EditMap"               # a patch map is a fragment: it need not be a whole location
+                for lvl, msg in tmx.check_map(tm, path, self.v, known):
+                    if patch and ("missing layer" in msg or "Back layer is empty" in msg or "no Warp property" in msg):
+                        continue
+                    getattr(self.rep, {"ERROR": "err", "WARN": "warn"}.get(lvl, "info"))(w, f"{ff}: {msg}")
+            if ch.get("Action") == "EditMap" and isinstance(ch.get("AddWarps"), list):
+                for warp in ch["AddWarps"]:
+                    toks = sub_modid(str(warp), self.uid).split()
+                    if len(toks) % 5 or not toks:
+                        self.rep.err(w, f"AddWarps entry '{warp}' is not made of 'x y Location tx ty' groups")
+                        continue
+                    for g in range(0, len(toks), 5):
+                        loc = toks[g + 2]
+                        if known and loc not in known and "{{" not in loc:
+                            self.rep.warn(w, f"AddWarps goes to '{loc}', which is not a vanilla location or one this pack adds")
 
     def _portrait_rows(self, npc: str):
         for ff in self.loads.get(f"portraits/{npc}".lower(), []):
