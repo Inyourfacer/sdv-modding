@@ -1,10 +1,10 @@
 # Observatory art: ComfyUI workflows
 
-Every piece here is location/tilesheet art, so all 8 use **Flux**: checkpoint `flux_dev.safetensors` with the Stardew Valley Style LoRA (Civitai 769753, `Stardew_Valley_Style.safetensors`, trigger `STDW`, strength 1.0). Settings: CFG 1.0, Flux guidance 3.5, 20 steps, euler / simple, no negative prompt. `sdv-modding.config.json` → `comfyui.asset_type_family` sends the `tilesheet` and `building` specs to Flux; the telescope, board and desk use the furniture spec, so they're generated with `--family flux`.
+Every piece here is location/tilesheet art, so all 8 use **Flux**: checkpoint `flux_dev.safetensors` with the Stardew Valley Style LoRA (Civitai 769753, `stardew-valley-style-000012.safetensors`, trigger `STDW`, strength 1.0). Settings: CFG 1.0, Flux guidance 3.5, 20 steps, euler / simple, no negative prompt. `sdv-modding.config.json` → `comfyui.asset_type_family` sends the `tilesheet` and `building` specs to Flux; the telescope, board and desk use the furniture spec, so they're generated with `--family flux`.
 
 Everything else in your projects stays on WAI Illustrious v17 (`comfyui.checkpoint`): sprites and items with `coropata_pixel` + `pixel-art-xl`, portraits with `jab_illustrious_V1.5`.
 
-**File names to confirm** with `comfy.py models`: `flux_dev.safetensors` is confirmed; the LoRA file name is still a guess. If `flux_dev` turns up under `diffusion_models` instead of `checkpoints`, it's a split model: set `comfyui.flux.loader` to `"unet"` and fill in `clip_l`, `t5xxl` and `vae` (those show up under `text_encoders` and `vaes`). Then regenerate (step 5).
+**File names to confirm** with `comfy.py models`: `flux_dev.safetensors` and `stardew-valley-style-000012.safetensors` are confirmed. If `flux_dev` turns up under `diffusion_models` instead of `checkpoints`, it's a split model: set `comfyui.flux.loader` to `"unet"` and fill in `clip_l`, `t5xxl` and `vae` (those show up under `text_encoders` and `vaes`). Then regenerate (step 5).
 
 All pieces share seed `7311042` so the style stays consistent.
 

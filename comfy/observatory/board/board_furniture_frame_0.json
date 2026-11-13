@@ -98,7 +98,7 @@
         "Node name for S&R": "LoraLoader"
       },
       "widgets_values": [
-        "Stardew_Valley_Style.safetensors",
+        "stardew-valley-style-000012.safetensors",
         1.0,
         1.0
       ]

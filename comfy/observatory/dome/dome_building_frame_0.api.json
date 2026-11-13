@@ -8,7 +8,7 @@
   "2": {
     "class_type": "LoraLoader",
     "inputs": {
-      "lora_name": "Stardew_Valley_Style.safetensors",
+      "lora_name": "stardew-valley-style-000012.safetensors",
       "strength_model": 1.0,
       "strength_clip": 1.0,
       "model": [
