@@ -10,8 +10,8 @@ Writes:
   mods/[CP] Observatory/assets/maps/ObservatoryExterior.tmx   (5x6 patch overlaid on Backwoods)
   mods/Observatory/assets/ui.png                              (star, glow, reset icon)
 
-The tilesheet layout (tile indices) is fixed: replace its art freely, but keep every tile where it is.
-Re-running overwrites the maps; it refuses to overwrite a tilesheet that's no longer a placeholder.
+The tilesheet layout (tile indices) is fixed. Generated art goes in tools/observatory/art/<piece>.png
+(see PIECES below and comfy/observatory/README.md) and is pasted into its slot on every run.
 """
 from __future__ import annotations
 
@@ -125,15 +125,43 @@ def draw_tiles() -> Image.Image:
     return im
 
 
+# Generated art: postprocess.py writes each piece to tools/observatory/art/<piece>.png at the exact pixel size,
+# and it's pasted over the drawn placeholder at its fixed slot. Missing pieces keep the placeholder.
+ART = Path(__file__).resolve().parent / "art"
+PIECES = {
+    # piece: (top-left tile col, row, width px, height px)
+    "dome":      (5, 1, 80, 96),
+    "telescope": (2, 1, 48, 48),
+    "board":     (0, 1, 32, 32),
+    "desk":      (14, 0, 32, 16),
+    "floor":     (FLOOR % COLS, FLOOR // COLS, 16, 16),
+    "wall":      (WALL % COLS, WALL // COLS, 16, 16),
+    "rug":       (RUG % COLS, RUG // COLS, 16, 16),
+    "deck":      (DECK % COLS, DECK // COLS, 16, 16),
+}
+
+
 def write_sheet():
     out = MAPS / f"{SHEET_NAME}.png"
     out.parent.mkdir(parents=True, exist_ok=True)
-    if out.exists() and Image.open(out).info.get("sdv_placeholder") != "1":
-        print(f"keeping {out} (real art)")
-        return
-    meta = PngInfo(); meta.add_text("sdv_placeholder", "1"); meta.add_text("sdv_spec", "tilesheet")
-    draw_tiles().save(out, pnginfo=meta)
-    print(f"wrote {out}")
+    im = draw_tiles()
+    missing = []
+    for name, (col, row, w, h) in PIECES.items():
+        src = ART / f"{name}.png"
+        if not src.exists():
+            missing.append(name)
+            continue
+        piece = Image.open(src).convert("RGBA")
+        if piece.size != (w, h):
+            raise SystemExit(f"{src} is {piece.size[0]}x{piece.size[1]}, expected {w}x{h} (run postprocess.py with --frame {w}x{h})")
+        x, y = col * T, row * T
+        im.paste((0, 0, 0, 0), (x, y, x + w, y + h))
+        im.alpha_composite(piece, (x, y))
+    meta = PngInfo()
+    if missing:
+        meta.add_text("sdv_placeholder", "1"); meta.add_text("sdv_spec", "tilesheet")
+    im.save(out, pnginfo=meta)
+    print(f"wrote {out}" + (f" (placeholder pieces: {', '.join(missing)})" if missing else " (all generated art)"))
 
 
 # ---------------------------------------------------------------- TMX writer

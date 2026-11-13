@@ -1,0 +1,40 @@
+{
+  "spec": "building",
+  "name": "dome",
+  "frame_w": 80,
+  "frame_h": 96,
+  "cols": 1,
+  "rows": 1,
+  "anchor": "bottom",
+  "remove_bg": true,
+  "colors_key": "tile_colors",
+  "seed": 7311042,
+  "checkpoint": "waiIllustriousSDXL_v170.safetensors",
+  "loras": [
+    {
+      "name": "coropata_pixel.safetensors",
+      "strength_model": 0.8,
+      "strength_clip": 0.8
+    },
+    {
+      "name": "pixel-art-xl.safetensors",
+      "strength_model": 0.5,
+      "strength_clip": 0.5,
+      "trigger": "pixel art"
+    }
+  ],
+  "negative": "worst quality, low quality, lowres, bad anatomy, bad hands, jpeg artifacts, blurry, watermark, signature, text, logo, cropped, extra digits, 3d, realistic, photo",
+  "game_asset": "Buildings/{ModId}_<Name> (Data/Buildings Texture)",
+  "jobs": [
+    {
+      "id": "frame_0",
+      "frames": [
+        0
+      ],
+      "label": "frame_0",
+      "output_prefix": "sdv/dome_building_frame_0",
+      "workflow": "dome_building_frame_0.json",
+      "prompt": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, pixel art, small white domed astronomical observatory, round stone walls, white dome with open telescope slit, wooden front door centered, two small round windows, night sky blue accents, farm building exterior, pixel art, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, no humans, simple background, white background"
+    }
+  ]
+}

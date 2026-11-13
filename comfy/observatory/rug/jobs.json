@@ -1,0 +1,40 @@
+{
+  "spec": "tilesheet",
+  "name": "rug",
+  "frame_w": 16,
+  "frame_h": 16,
+  "cols": 1,
+  "rows": 1,
+  "anchor": "center",
+  "remove_bg": false,
+  "colors_key": "tile_colors",
+  "seed": 7311042,
+  "checkpoint": "waiIllustriousSDXL_v170.safetensors",
+  "loras": [
+    {
+      "name": "coropata_pixel.safetensors",
+      "strength_model": 0.8,
+      "strength_clip": 0.8
+    },
+    {
+      "name": "pixel-art-xl.safetensors",
+      "strength_model": 0.5,
+      "strength_clip": 0.5,
+      "trigger": "pixel art"
+    }
+  ],
+  "negative": "worst quality, low quality, lowres, bad anatomy, bad hands, jpeg artifacts, blurry, watermark, signature, text, logo, cropped, extra digits, 3d, realistic, photo",
+  "game_asset": "Maps/z_{ModId}_tiles (referenced by the .tmx)",
+  "jobs": [
+    {
+      "id": "frame_0",
+      "frames": [
+        0
+      ],
+      "label": "frame_0",
+      "output_prefix": "sdv/rug_tilesheet_frame_0",
+      "workflow": "rug_tilesheet_frame_0.json",
+      "prompt": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, pixel art, seamless dark purple woven rug with small gold star pattern tile texture, top-down view, pixel art game tileset, stardew valley style, cozy farm game, soft shading, clean outlines"
+    }
+  ]
+}

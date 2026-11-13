@@ -1,0 +1,40 @@
+{
+  "spec": "furniture",
+  "name": "telescope",
+  "frame_w": 48,
+  "frame_h": 48,
+  "cols": 1,
+  "rows": 1,
+  "anchor": "bottom",
+  "remove_bg": true,
+  "colors_key": "item_colors",
+  "seed": 7311042,
+  "checkpoint": "waiIllustriousSDXL_v170.safetensors",
+  "loras": [
+    {
+      "name": "coropata_pixel.safetensors",
+      "strength_model": 0.8,
+      "strength_clip": 0.8
+    },
+    {
+      "name": "pixel-art-xl.safetensors",
+      "strength_model": 0.5,
+      "strength_clip": 0.5,
+      "trigger": "pixel art"
+    }
+  ],
+  "negative": "worst quality, low quality, lowres, bad anatomy, bad hands, jpeg artifacts, blurry, watermark, signature, text, logo, cropped, extra digits, 3d, realistic, photo",
+  "game_asset": "Mods/{ModId}/Furniture",
+  "jobs": [
+    {
+      "id": "frame_0",
+      "frames": [
+        0
+      ],
+      "label": "frame_0",
+      "output_prefix": "sdv/telescope_furniture_frame_0",
+      "workflow": "telescope_furniture_frame_0.json",
+      "prompt": "masterpiece, best quality, amazing quality, very aesthetic, absurdres, pixel art, brass refracting telescope on a wooden tripod, tube angled up to the right, antique, pixel art furniture, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, no humans, simple background, white background"
+    }
+  ]
+}

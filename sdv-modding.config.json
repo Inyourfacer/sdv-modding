@@ -8,22 +8,193 @@
     "stability_matrix_root": "C:\\StabilityMatrix",
     "input_dir": "C:\\StabilityMatrix\\Data\\Packages\\ComfyUI\\input",
     "output_dir": "C:\\StabilityMatrix\\Data\\Packages\\ComfyUI\\output",
-    "checkpoint": "illustriousXL_v01.safetensors",
+    "checkpoint": "waiIllustriousSDXL_v170.safetensors",
     "clip_skip": 2,
-    "loras": [
-      {
-        "name": "pixel-art-xl.safetensors",
-        "strength_model": 0.8,
-        "strength_clip": 0.8,
-        "trigger": "pixel art"
-      }
-    ],
+    "loras": [],
     "asset_type_loras": {
-      "portrait": [],
-      "portrait_hd": [],
-      "character_sprite": [],
-      "object_icon": [],
-      "tilesheet": []
+      "character_sprite": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "object_icon": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "big_craftable": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "crop": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "fruit_tree": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "furniture": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "hat": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "shirt": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "fs_hair": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "fs_accessory": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "alt_texture": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "tilesheet": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "building": [
+        {
+          "name": "coropata_pixel.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        },
+        {
+          "name": "pixel-art-xl.safetensors",
+          "strength_model": 0.5,
+          "strength_clip": 0.5,
+          "trigger": "pixel art"
+        }
+      ],
+      "portrait": [
+        {
+          "name": "jab_illustrious_V1.5.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        }
+      ],
+      "portrait_hd": [
+        {
+          "name": "jab_illustrious_V1.5.safetensors",
+          "strength_model": 0.8,
+          "strength_clip": 0.8
+        }
+      ]
     },
     "sampler": "euler_ancestral",
     "scheduler": "normal",
