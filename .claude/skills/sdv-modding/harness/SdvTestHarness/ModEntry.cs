@@ -325,6 +325,10 @@ internal sealed class ModEntry : Mod
                 }
                 return stepTicks >= 20 ? Ok() : null;
 
+            case "assert_npc":
+                var found = Game1.getCharacterFromName(s.Npc ?? "");
+                return found is null ? Bad($"npc '{s.Npc}' does not exist in this save") : Ok($"{found.Name} is in {found.currentLocation?.NameOrUniqueName}");
+
             case "assert_location":
                 return Game1.currentLocation?.NameOrUniqueName == s.Location ? Ok() : Bad($"in '{Game1.currentLocation?.NameOrUniqueName}', expected '{s.Location}'");
 
