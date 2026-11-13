@@ -1,10 +1,10 @@
 # Observatory art: ComfyUI workflows
 
-Checkpoint `waiIllustriousSDXL_v170.safetensors` (WAI Illustrious v17). LoRAs come from `sdv-modding.config.json` → `comfyui.asset_type_loras`:
-- sprites, items, furniture, buildings, tiles: `coropata_pixel.safetensors` (0.8) + `pixel-art-xl.safetensors` (0.5, trigger `pixel art`)
-- portraits: `jab_illustrious_V1.5.safetensors` (0.8)
+Every piece here is location/tilesheet art, so all 8 use **Flux**: checkpoint `fulx_dev.safetensors` with the Stardew Valley Style LoRA (Civitai 769753, `Stardew_Valley_Style.safetensors`, trigger `STDW`, strength 1.0). Settings: CFG 1.0, Flux guidance 3.5, 20 steps, euler / simple, no negative prompt. `sdv-modding.config.json` → `comfyui.asset_type_family` sends the `tilesheet` and `building` specs to Flux; the telescope, board and desk use the furniture spec, so they're generated with `--family flux`.
 
-**File names are guesses.** If a loader node turns red in ComfyUI, change the name in `sdv-modding.config.json` to match your file and re-run the `make_comfy_workflow.py` lines below. To use only one pixel LoRA, delete the other from the config.
+Everything else in your projects stays on WAI Illustrious v17 (`comfyui.checkpoint`): sprites and items with `coropata_pixel` + `pixel-art-xl`, portraits with `jab_illustrious_V1.5`.
+
+**File names to confirm** with `comfy.py models`: `fulx_dev.safetensors` is spelled as you gave it, and the LoRA file name is a guess. If `fulx_dev` turns up under `diffusion_models` instead of `checkpoints`, it's a split model: set `comfyui.flux.loader` to `"unet"` and fill in `clip_l`, `t5xxl` and `vae` (those show up under `text_encoders` and `vaes`). Then regenerate (step 5).
 
 All pieces share seed `7311042` so the style stays consistent.
 
@@ -31,6 +31,6 @@ Let `S=.claude/skills/sdv-modding/scripts`.
    ```
    For a matching palette across pieces, add `--palette tools/observatory/art/dome.png` to the later ones.
 4. Rebuild the tilesheet: `python tools/observatory/build_assets.py`. It stays flagged as placeholder until all 8 pieces exist. Check the result with `python $S/tmx.py render "mods/[CP] Observatory/assets/maps/Observatory.tmx" --out obs.png` and look at it.
-5. To regenerate the workflows after a config change, run the `make_comfy_workflow.py` commands from the commit that added this folder (seed `7311042`, `--spec building --frame 80x96` for the dome, `--spec furniture` for the telescope/board/desk, `--spec tilesheet --frame 16x16` for tiles; all with `--cols 1 --rows 1 --api`).
+5. To regenerate after a config change: `make_comfy_workflow.py --seed 7311042 --api --cols 1 --rows 1` with `--spec building --frame 80x96` (dome), `--spec furniture --family flux --frame 48x48 / 32x32 / 32x16` (telescope / board / desk), `--spec tilesheet --frame 16x16` (floor, wall, rug, deck). The subjects are in each folder's `jobs.json`.
 
 Tiles not listed (wall trim, windows, door mat, sky, railing) keep the hand-drawn pixel art from `build_assets.py`.

@@ -315,7 +315,8 @@ def main():
                 except Exception:
                     return []
             res = {"checkpoints": opts("CheckpointLoaderSimple", "ckpt_name"), "loras": opts("LoraLoader", "lora_name"),
-                   "controlnets": opts("ControlNetLoader", "control_net_name"), "vaes": opts("VAELoader", "vae_name")}
+                   "controlnets": opts("ControlNetLoader", "control_net_name"), "vaes": opts("VAELoader", "vae_name"),
+                   "diffusion_models": opts("UNETLoader", "unet_name"), "text_encoders": opts("DualCLIPLoader", "clip_name1")}
             if a.json:
                 print(json.dumps(res, indent=2))
             else:

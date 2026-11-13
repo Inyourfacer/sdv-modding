@@ -1,6 +1,6 @@
 {
-  "last_node_id": 11,
-  "last_link_id": 14,
+  "last_node_id": 10,
+  "last_link_id": 12,
   "nodes": [
     {
       "id": 1,
@@ -21,7 +21,7 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            2
+            1
           ],
           "slot_index": 0
         },
@@ -29,7 +29,7 @@
           "name": "CLIP",
           "type": "CLIP",
           "links": [
-            1
+            2
           ],
           "slot_index": 1
         },
@@ -37,7 +37,7 @@
           "name": "VAE",
           "type": "VAE",
           "links": [
-            13
+            11
           ],
           "slot_index": 2
         }
@@ -46,49 +46,11 @@
         "Node name for S&R": "CheckpointLoaderSimple"
       },
       "widgets_values": [
-        "waiIllustriousSDXL_v170.safetensors"
+        "fulx_dev.safetensors"
       ]
     },
     {
       "id": 2,
-      "type": "CLIPSetLastLayer",
-      "pos": [
-        20,
-        260
-      ],
-      "size": [
-        320,
-        60
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 1
-        }
-      ],
-      "outputs": [
-        {
-          "name": "CLIP",
-          "type": "CLIP",
-          "links": [
-            3
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "CLIPSetLastLayer"
-      },
-      "widgets_values": [
-        -2
-      ]
-    },
-    {
-      "id": 3,
       "type": "LoraLoader",
       "pos": [
         360,
@@ -99,18 +61,18 @@
         130
       ],
       "flags": {},
-      "order": 2,
+      "order": 1,
       "mode": 0,
       "inputs": [
         {
           "name": "model",
           "type": "MODEL",
-          "link": 2
+          "link": 1
         },
         {
           "name": "clip",
           "type": "CLIP",
-          "link": 3
+          "link": 2
         }
       ],
       "outputs": [
@@ -118,16 +80,17 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
+            6
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            3,
             4
           ],
-          "slot_index": 0
-        },
-        {
-          "name": "CLIP",
-          "type": "CLIP",
-          "links": [
-            5
-          ],
           "slot_index": 1
         }
       ],
@@ -135,67 +98,13 @@
         "Node name for S&R": "LoraLoader"
       },
       "widgets_values": [
-        "coropata_pixel.safetensors",
-        0.8,
-        0.8
+        "Stardew_Valley_Style.safetensors",
+        1.0,
+        1.0
       ]
     },
     {
-      "id": 4,
-      "type": "LoraLoader",
-      "pos": [
-        360,
-        260
-      ],
-      "size": [
-        320,
-        130
-      ],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "model",
-          "type": "MODEL",
-          "link": 4
-        },
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 5
-        }
-      ],
-      "outputs": [
-        {
-          "name": "MODEL",
-          "type": "MODEL",
-          "links": [
-            8
-          ],
-          "slot_index": 0
-        },
-        {
-          "name": "CLIP",
-          "type": "CLIP",
-          "links": [
-            6,
-            7
-          ],
-          "slot_index": 1
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LoraLoader"
-      },
-      "widgets_values": [
-        "pixel-art-xl.safetensors",
-        0.5,
-        0.5
-      ]
-    },
-    {
-      "id": 5,
+      "id": 3,
       "type": "CLIPTextEncode",
       "pos": [
         700,
@@ -206,13 +115,13 @@
         180
       ],
       "flags": {},
-      "order": 4,
+      "order": 2,
       "mode": 0,
       "inputs": [
         {
           "name": "clip",
           "type": "CLIP",
-          "link": 6
+          "link": 3
         }
       ],
       "outputs": [
@@ -220,7 +129,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            9
+            5
           ],
           "slot_index": 0
         }
@@ -229,12 +138,12 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "masterpiece, best quality, amazing quality, very aesthetic, pixel art, small white domed astronomical observatory, round stone walls, white dome with open telescope slit, wooden front door centered, two small round windows, night sky blue accents, farm building exterior, pixel art, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, no humans, simple background, white background"
+        "STDW, a small white domed astronomical observatory with round stone walls, a white dome with an open telescope slit, a wooden front door in the center and two small round windows, farm building exterior, pixel art, three-quarter top-down view, plain white background, stardew valley style, cozy farm game, soft shading, clean outlines, isolated on a plain white background, no people"
       ],
       "title": "Positive"
     },
     {
-      "id": 6,
+      "id": 4,
       "type": "CLIPTextEncode",
       "pos": [
         700,
@@ -245,13 +154,13 @@
         160
       ],
       "flags": {},
-      "order": 5,
+      "order": 3,
       "mode": 0,
       "inputs": [
         {
           "name": "clip",
           "type": "CLIP",
-          "link": 7
+          "link": 4
         }
       ],
       "outputs": [
@@ -259,7 +168,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            10
+            8
           ],
           "slot_index": 0
         }
@@ -268,13 +177,51 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "lowres, worst quality, bad quality, bad anatomy, bad hands, jpeg artifacts, signature, watermark, text, cropped, multiple views, out of frame, detailed background, scenery, blurry, 3d, realistic, photo, logo"
+        ""
       ],
       "title": "Negative"
     },
     {
-      "id": 7,
-      "type": "EmptyLatentImage",
+      "id": 5,
+      "type": "FluxGuidance",
+      "pos": [
+        700,
+        320
+      ],
+      "size": [
+        320,
+        60
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            7
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxGuidance"
+      },
+      "widgets_values": [
+        3.5
+      ]
+    },
+    {
+      "id": 6,
+      "type": "EmptySD3LatentImage",
       "pos": [
         20,
         420
@@ -284,20 +231,20 @@
         110
       ],
       "flags": {},
-      "order": 6,
+      "order": 5,
       "mode": 0,
       "outputs": [
         {
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            11
+            9
           ],
           "slot_index": 0
         }
       ],
       "properties": {
-        "Node name for S&R": "EmptyLatentImage"
+        "Node name for S&R": "EmptySD3LatentImage"
       },
       "widgets_values": [
         1024,
@@ -306,7 +253,7 @@
       ]
     },
     {
-      "id": 8,
+      "id": 7,
       "type": "KSampler",
       "pos": [
         1160,
@@ -317,28 +264,28 @@
         270
       ],
       "flags": {},
-      "order": 7,
+      "order": 6,
       "mode": 0,
       "inputs": [
         {
           "name": "model",
           "type": "MODEL",
-          "link": 8
+          "link": 6
         },
         {
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 9
+          "link": 7
         },
         {
           "name": "negative",
           "type": "CONDITIONING",
-          "link": 10
+          "link": 8
         },
         {
           "name": "latent_image",
           "type": "LATENT",
-          "link": 11
+          "link": 9
         }
       ],
       "outputs": [
@@ -346,7 +293,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            12
+            10
           ],
           "slot_index": 0
         }
@@ -357,15 +304,15 @@
       "widgets_values": [
         7311042,
         "fixed",
-        28,
-        5.5,
-        "euler_ancestral",
-        "normal",
+        20,
+        1.0,
+        "euler",
+        "simple",
         1.0
       ]
     },
     {
-      "id": 9,
+      "id": 8,
       "type": "VAEDecode",
       "pos": [
         1160,
@@ -376,18 +323,18 @@
         50
       ],
       "flags": {},
-      "order": 8,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 12
+          "link": 10
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 13
+          "link": 11
         }
       ],
       "outputs": [
@@ -395,7 +342,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            14
+            12
           ],
           "slot_index": 0
         }
@@ -406,7 +353,7 @@
       "widgets_values": []
     },
     {
-      "id": 10,
+      "id": 9,
       "type": "SaveImage",
       "pos": [
         1520,
@@ -417,13 +364,13 @@
         460
       ],
       "flags": {},
-      "order": 9,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 14
+          "link": 12
         }
       ],
       "outputs": [],
@@ -435,7 +382,7 @@
       ]
     },
     {
-      "id": 11,
+      "id": 10,
       "type": "Note",
       "pos": [
         1160,
@@ -446,7 +393,7 @@
         200
       ],
       "flags": {},
-      "order": 10,
+      "order": 9,
       "mode": 0,
       "outputs": [],
       "properties": {
@@ -462,112 +409,96 @@
     [
       1,
       1,
-      1,
-      2,
       0,
-      "CLIP"
-    ],
-    [
       2,
-      1,
-      0,
-      3,
       0,
       "MODEL"
     ],
     [
-      3,
       2,
-      0,
-      3,
+      1,
+      1,
+      2,
       1,
       "CLIP"
     ],
     [
-      4,
+      3,
+      2,
+      1,
       3,
       0,
+      "CLIP"
+    ],
+    [
+      4,
+      2,
+      1,
       4,
       0,
-      "MODEL"
+      "CLIP"
     ],
     [
       5,
       3,
-      1,
-      4,
-      1,
-      "CLIP"
+      0,
+      5,
+      0,
+      "CONDITIONING"
     ],
     [
       6,
-      4,
-      1,
-      5,
+      2,
       0,
-      "CLIP"
+      7,
+      0,
+      "MODEL"
     ],
     [
       7,
-      4,
-      1,
-      6,
+      5,
       0,
-      "CLIP"
+      7,
+      1,
+      "CONDITIONING"
     ],
     [
       8,
       4,
       0,
-      8,
-      0,
-      "MODEL"
+      7,
+      2,
+      "CONDITIONING"
     ],
     [
       9,
-      5,
+      6,
       0,
-      8,
-      1,
-      "CONDITIONING"
+      7,
+      3,
+      "LATENT"
     ],
     [
       10,
-      6,
-      0,
-      8,
-      2,
-      "CONDITIONING"
-    ],
-    [
-      11,
       7,
       0,
       8,
-      3,
+      0,
       "LATENT"
+    ],
+    [
+      11,
+      1,
+      2,
+      8,
+      1,
+      "VAE"
     ],
     [
       12,
       8,
       0,
       9,
-      0,
-      "LATENT"
-    ],
-    [
-      13,
-      1,
-      2,
-      9,
-      1,
-      "VAE"
-    ],
-    [
-      14,
-      9,
-      0,
-      10,
       0,
       "IMAGE"
     ]

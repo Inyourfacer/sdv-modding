@@ -204,7 +204,33 @@
     "quality_prefix": "masterpiece, best quality, amazing quality, very aesthetic",
     "negative": "lowres, worst quality, bad quality, bad anatomy, bad hands, jpeg artifacts, signature, watermark, text, cropped, multiple views, out of frame, detailed background, scenery, blurry, 3d, realistic, photo, logo",
     "style_suffix": "stardew valley style, cozy farm game, soft shading, clean outlines",
-    "img2img_denoise": 0.6
+    "img2img_denoise": 0.6,
+    "asset_type_family": {
+      "tilesheet": "flux",
+      "building": "flux"
+    },
+    "flux": {
+      "_doc": "Used for specs listed in asset_type_family (and --family flux). loader: checkpoint = one all-in-one file in models/checkpoints; unet = a diffusion model in models/diffusion_models (or unet) plus clip_l, t5xxl and vae files. LoRAs here must be Flux LoRAs.",
+      "checkpoint": "fulx_dev.safetensors",
+      "loader": "checkpoint",
+      "weight_dtype": "default",
+      "clip_l": null,
+      "t5xxl": null,
+      "vae": null,
+      "loras": [
+        {
+          "name": "Stardew_Valley_Style.safetensors",
+          "strength_model": 1.0,
+          "strength_clip": 1.0,
+          "trigger": "STDW"
+        }
+      ],
+      "guidance": 3.5,
+      "steps": 20,
+      "sampler": "euler",
+      "scheduler": "simple",
+      "style_suffix": "stardew valley style, cozy farm game, soft shading, clean outlines"
+    }
   },
   "postprocess": {
     "portrait_colors": 32,

@@ -92,3 +92,6 @@ Never overwrite approved or installed art, or any non-placeholder file, unless t
 
 ## Manual art
 If the user supplies their own images, skip steps 1–2 and run step 3 with `--inputs` (or `--background keep --colors 256` to only resize/arrange).
+
+## Flux (simple recipe only)
+`make_comfy_workflow.py --family flux` (or `comfyui.asset_type_family: {"<spec>": "flux"}` in the config) builds a Flux.1 graph from core nodes: `CheckpointLoaderSimple` for an all-in-one file, or `UNETLoader` + `DualCLIPLoader` (type `flux`) + `VAELoader` when `comfyui.flux.loader` is `"unet"`; LoRAs from `comfyui.flux.loras` only (SDXL LoRAs don't load on Flux); `FluxGuidance` on the positive; empty negative; `EmptySD3LatentImage`; CFG 1.0; no clip skip; no Danbooru quality prefix. Settings: `comfyui.flux` (`checkpoint`, `loader`, `clip_l`, `t5xxl`, `vae`, `weight_dtype`, `loras`, `guidance` 3.5, `steps` 20, `sampler` euler, `scheduler` simple, `style_suffix`). Write subjects as plain sentences. The consistency recipes (`portrait_sheet`, `sprite_sheet`, `reference_sheet`) stay SDXL-family. `comfy.py models` also lists `diffusion_models` and `text_encoders` so split Flux files can be found.

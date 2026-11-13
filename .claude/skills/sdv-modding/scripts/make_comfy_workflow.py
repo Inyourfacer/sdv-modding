@@ -2,7 +2,8 @@
 """Generate ComfyUI workflow JSON (UI format, drag-and-drop loadable) for SDV assets.
 
 One workflow per job (expression / direction / stage / variant) + jobs.json describing how
-outputs map back into the sheet. Targets an SDXL/Illustrious checkpoint with a LoRA chain.
+outputs map back into the sheet. Targets an SDXL/Illustrious checkpoint with a LoRA chain, or Flux.1 with --family flux
+(or comfyui.asset_type_family in the config; settings in comfyui.flux).
 
   python make_comfy_workflow.py --spec portrait --name Mira \
       --subject "1girl, young woman, short teal hair, freckles, green overalls" --out-dir comfy/Mira_portrait
@@ -76,6 +77,8 @@ class Graph:
             "EmptyLatentImage": ["width", "height", "batch_size"], "LoadImage": ["image", "upload"],
             "KSampler": ["seed", "control_after_generate", "steps", "cfg", "sampler_name", "scheduler", "denoise"],
             "SaveImage": ["filename_prefix"], "VAEDecode": [], "VAEEncode": [],
+            "UNETLoader": ["unet_name", "weight_dtype"], "DualCLIPLoader": ["clip_name1", "clip_name2", "type"],
+            "VAELoader": ["vae_name"], "FluxGuidance": ["guidance"], "EmptySD3LatentImage": ["width", "height", "batch_size"],
         }
         api = {}
         link_src = {l[0]: (l[1], l[2]) for l in self.links}
@@ -96,11 +99,20 @@ class Graph:
 
 
 def build(cfg, ckpt, loras, pos_text, neg_text, w, h, seed, steps, cfg_scale, sampler, scheduler,
-          prefix, init_name=None, denoise=1.0, note=""):
+          prefix, init_name=None, denoise=1.0, note="", flux=None):
+    """SDXL-family graph by default. With `flux` (the config's comfyui.flux block): Flux.1 graph, all core nodes:
+    checkpoint loader (all-in-one file) or UNETLoader + DualCLIPLoader + VAELoader (split files), FluxGuidance on the
+    positive, an empty negative (Flux ignores it at CFG 1), EmptySD3LatentImage, no clip skip."""
     g = Graph()
-    ck = g.node("CheckpointLoaderSimple", [], [("MODEL", "MODEL"), ("CLIP", "CLIP"), ("VAE", "VAE")], [ckpt], (20, 120), (320, 100))
-    model_src, clip_src = (ck, 0), (ck, 1)
-    clip_skip = int(cfg.get("clip_skip") or 1)
+    if flux and flux.get("loader") == "unet":
+        un = g.node("UNETLoader", [], [("MODEL", "MODEL")], [ckpt, flux.get("weight_dtype") or "default"], (20, 20), (320, 90))
+        dc = g.node("DualCLIPLoader", [], [("CLIP", "CLIP")], [flux["clip_l"], flux["t5xxl"], "flux"], (20, 130), (320, 110))
+        vl = g.node("VAELoader", [], [("VAE", "VAE")], [flux["vae"]], (20, 260), (320, 60))
+        model_src, clip_src, vae_src = (un, 0), (dc, 0), (vl, 0)
+    else:
+        ck = g.node("CheckpointLoaderSimple", [], [("MODEL", "MODEL"), ("CLIP", "CLIP"), ("VAE", "VAE")], [ckpt], (20, 120), (320, 100))
+        model_src, clip_src, vae_src = (ck, 0), (ck, 1), (ck, 2)
+    clip_skip = 1 if flux else int(cfg.get("clip_skip") or 1)
     if clip_skip > 1:
         cs = g.node("CLIPSetLastLayer", [("clip", "CLIP")], [("CLIP", "CLIP")], [-clip_skip], (20, 260), (320, 60))
         g.link(*clip_src, cs, "clip"); clip_src = (cs, 0)
@@ -115,22 +127,27 @@ def build(cfg, ckpt, loras, pos_text, neg_text, w, h, seed, steps, cfg_scale, sa
     pos = g.node("CLIPTextEncode", [("clip", "CLIP")], [("CONDITIONING", "CONDITIONING")], [pos_text], (x, 420), (420, 180), "Positive")
     neg = g.node("CLIPTextEncode", [("clip", "CLIP")], [("CONDITIONING", "CONDITIONING")], [neg_text], (x, 640), (420, 160), "Negative")
     g.link(*clip_src, pos, "clip"); g.link(*clip_src, neg, "clip")
+    pos_src = (pos, 0)
+    if flux:
+        fg = g.node("FluxGuidance", [("conditioning", "CONDITIONING")], [("CONDITIONING", "CONDITIONING")],
+                    [float(flux.get("guidance", 3.5))], (x, 320), (320, 60))
+        g.link(pos, 0, fg, "conditioning"); pos_src = (fg, 0)
 
     if init_name:
         li = g.node("LoadImage", [], [("IMAGE", "IMAGE"), ("MASK", "MASK")], [init_name, "image"], (20, 420), (320, 320), "Init / guide image")
         ve = g.node("VAEEncode", [("pixels", "IMAGE"), ("vae", "VAE")], [("LATENT", "LATENT")], [], (20, 780), (220, 50))
-        g.link(li, 0, ve, "pixels"); g.link(ck, 2, ve, "vae")
+        g.link(li, 0, ve, "pixels"); g.link(*vae_src, ve, "vae")
         latent = (ve, 0)
     else:
-        el = g.node("EmptyLatentImage", [], [("LATENT", "LATENT")], [w, h, 1], (20, 420), (320, 110))
+        el = g.node("EmptySD3LatentImage" if flux else "EmptyLatentImage", [], [("LATENT", "LATENT")], [w, h, 1], (20, 420), (320, 110))
         latent = (el, 0)
         denoise = 1.0
 
     ks = g.node("KSampler", [("model", "MODEL"), ("positive", "CONDITIONING"), ("negative", "CONDITIONING"), ("latent_image", "LATENT")],
                 [("LATENT", "LATENT")], [seed, "fixed", steps, cfg_scale, sampler, scheduler, round(denoise, 3)], (x + 460, 120), (320, 270))
-    g.link(*model_src, ks, "model"); g.link(pos, 0, ks, "positive"); g.link(neg, 0, ks, "negative"); g.link(*latent, ks, "latent_image")
+    g.link(*model_src, ks, "model"); g.link(*pos_src, ks, "positive"); g.link(neg, 0, ks, "negative"); g.link(*latent, ks, "latent_image")
     vd = g.node("VAEDecode", [("samples", "LATENT"), ("vae", "VAE")], [("IMAGE", "IMAGE")], [], (x + 460, 430), (220, 50))
-    g.link(ks, 0, vd, "samples"); g.link(ck, 2, vd, "vae")
+    g.link(ks, 0, vd, "samples"); g.link(*vae_src, vd, "vae")
     sv = g.node("SaveImage", [("images", "IMAGE")], [], [prefix], (x + 820, 120), (420, 460))
     g.link(vd, 0, sv, "images")
     if note:
@@ -210,6 +227,9 @@ def main():
     ap.add_argument("--outfit-tags", default="", help="recipes: outfit tags re-drawn from the default look")
     ap.add_argument("--preset", help="illustrious | pony: fills quality/negative/sampler defaults (assets/presets.json)")
     ap.add_argument("--checkpoint", help="override the configured checkpoint for this run (style tests)")
+    ap.add_argument("--family", choices=["sdxl", "flux"],
+                    help="model family (simple recipe). Default: comfyui.asset_type_family[<spec>] in the config, else sdxl. "
+                         "flux uses the comfyui.flux block (checkpoint, loader, loras, guidance, steps)")
     ap.add_argument("--spec")
     ap.add_argument("--name", required=True, help="asset/character name used in file prefixes")
     ap.add_argument("--subject", help="Danbooru-style tags or description of the subject (or use --character)")
@@ -259,13 +279,32 @@ def main():
         raise SystemExit("No checkpoint set: put comfyui.checkpoint (a file name ComfyUI lists) in sdv-modding.config.json. "
                          "Run scripts/doctor.py to list the checkpoints found.")
     if a.recipe != "simple":
+        if a.family == "flux":
+            raise SystemExit("--family flux works with the simple recipe only (the consistency recipes are SDXL/Illustrious graphs).")
         return run_recipe(a, cfg, cc, ch)
     if not a.spec:
         raise SystemExit("--spec is required for the simple recipe.")
     spec = get_spec(a.spec, a.frame, a.cols, a.rows)
     out = Path(a.out_dir); out.mkdir(parents=True, exist_ok=True)
 
-    loras = [] if a.no_config_loras else list(cc.get("loras") or []) + list((cc.get("asset_type_loras") or {}).get(a.spec, []))
+    family = a.family or (cc.get("asset_type_family") or {}).get(a.spec) or "sdxl"
+    flux = None
+    if family == "flux":
+        flux = dict(cc.get("flux") or {})
+        if a.checkpoint:
+            flux["checkpoint"] = a.checkpoint
+        if not flux.get("checkpoint"):
+            raise SystemExit("Flux: set comfyui.flux.checkpoint in sdv-modding.config.json (comfy.py models lists the files ComfyUI sees).")
+        if flux.get("loader") == "unet" and not all(flux.get(k) for k in ("clip_l", "t5xxl", "vae")):
+            raise SystemExit('Flux with "loader": "unet" also needs comfyui.flux.clip_l, t5xxl and vae.')
+        if ch.get("loras"):
+            print("note: the character's LoRAs are SDXL-family and were left out of this Flux workflow")
+            ch = {**ch, "loras": []}
+
+    if flux is not None:
+        loras = [] if a.no_config_loras else list(flux.get("loras") or [])
+    else:
+        loras = [] if a.no_config_loras else list(cc.get("loras") or []) + list((cc.get("asset_type_loras") or {}).get(a.spec, []))
     loras += list(ch.get("loras") or [])
     for s in a.lora:
         parts = s.split(":")
@@ -278,7 +317,7 @@ def main():
 
     seed = a.seed if a.seed is not None else random.randint(1, 2**31 - 1)
     jobs = plan_jobs(spec, a.per_row, a.mirror_left, a.frames.split(",") if a.frames else None)
-    neg = ", ".join(x for x in [cc["negative"], a.negative_extra] if x)
+    neg = "" if flux is not None else ", ".join(x for x in [cc["negative"], a.negative_extra] if x)
     denoise = a.denoise if a.denoise is not None else float(cc.get("img2img_denoise", 0.6))
 
     init_dir = Path(a.init) if a.init and Path(a.init).is_dir() else None
@@ -292,8 +331,9 @@ def main():
             continue
         idx = j["frames"][0]
         tmpl = spec.get("prompt", "{subject}")
-        positive = ", ".join(x for x in [cc.get("quality_prefix", ""), triggers, fill_prompt(tmpl, a.subject, j["label"], idx),
-                                          cc.get("style_suffix", ""), a.extra] if x)
+        quality = "" if flux is not None else cc.get("quality_prefix", "")  # Danbooru quality tags are an SDXL/Illustrious thing
+        style = flux.get("style_suffix", cc.get("style_suffix", "")) if flux is not None else cc.get("style_suffix", "")
+        positive = ", ".join(x for x in [quality, triggers, fill_prompt(tmpl, a.subject, j["label"], idx), style, a.extra] if x)
         prefix = f"sdv/{safe_name(a.name)}_{a.spec}_{safe_name(j['id'])}"
         j["output_prefix"] = prefix
 
@@ -317,9 +357,14 @@ def main():
         note = (f"Spec: {a.spec}  frame {spec['frame_w']}x{spec['frame_h']}  sheet {spec['sheet_w']}x{spec['sheet_h']}\n"
                 f"Job '{j['id']}' -> frames {j['frames']}\nGame asset: {spec.get('game_asset', '')}\n"
                 f"Generate, pick the best output, then run postprocess.py with jobs.json.")
-        g = build(cc, cc["checkpoint"], loras, positive, neg, spec["gen_w"], spec["gen_h"], seed,
-                  a.steps or int(cc.get("steps", 28)), a.cfg or float(cc.get("cfg", 6.0)), cc.get("sampler", "euler_ancestral"),
-                  cc.get("scheduler", "normal"), prefix, init_name, denoise, note)
+        if flux is not None:
+            g = build(cc, flux["checkpoint"], loras, positive, neg, spec["gen_w"], spec["gen_h"], seed,
+                      a.steps or int(flux.get("steps", 20)), a.cfg or 1.0, flux.get("sampler", "euler"),
+                      flux.get("scheduler", "simple"), prefix, init_name, denoise, note, flux=flux)
+        else:
+            g = build(cc, cc["checkpoint"], loras, positive, neg, spec["gen_w"], spec["gen_h"], seed,
+                      a.steps or int(cc.get("steps", 28)), a.cfg or float(cc.get("cfg", 6.0)), cc.get("sampler", "euler_ancestral"),
+                      cc.get("scheduler", "normal"), prefix, init_name, denoise, note)
         wf = out / f"{safe_name(a.name)}_{a.spec}_{safe_name(j['id'])}.json"
         dump_json(g.to_ui(), wf)
         j["workflow"] = wf.name
@@ -332,7 +377,8 @@ def main():
         "spec": a.spec, "name": a.name, "frame_w": spec["frame_w"], "frame_h": spec["frame_h"],
         "cols": spec["cols"], "rows": spec["rows"], "anchor": spec.get("anchor", "center"),
         "remove_bg": spec.get("remove_bg", False), "colors_key": spec.get("colors"),
-        "seed": seed, "checkpoint": cc["checkpoint"], "loras": loras, "negative": neg,
+        "seed": seed, "family": family, "checkpoint": flux["checkpoint"] if flux is not None else cc["checkpoint"],
+        "loras": loras, "negative": neg,
         "game_asset": spec.get("game_asset"), "jobs": jobs,
     }
     dump_json(manifest, out / "jobs.json")

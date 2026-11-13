@@ -2,13 +2,19 @@
   "1": {
     "class_type": "CheckpointLoaderSimple",
     "inputs": {
-      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+      "ckpt_name": "fulx_dev.safetensors"
     }
   },
   "2": {
-    "class_type": "CLIPSetLastLayer",
+    "class_type": "LoraLoader",
     "inputs": {
-      "stop_at_clip_layer": -2,
+      "lora_name": "Stardew_Valley_Style.safetensors",
+      "strength_model": 1.0,
+      "strength_clip": 1.0,
+      "model": [
+        "1",
+        0
+      ],
       "clip": [
         "1",
         1
@@ -16,76 +22,54 @@
     }
   },
   "3": {
-    "class_type": "LoraLoader",
+    "class_type": "CLIPTextEncode",
     "inputs": {
-      "lora_name": "coropata_pixel.safetensors",
-      "strength_model": 0.8,
-      "strength_clip": 0.8,
-      "model": [
-        "1",
-        0
-      ],
+      "text": "STDW, seamless dark navy blue wallpaper with tiny gold stars tile texture, top-down view, pixel art game tileset, stardew valley style, cozy farm game, soft shading, clean outlines, seamless texture",
       "clip": [
         "2",
-        0
+        1
       ]
     }
   },
   "4": {
-    "class_type": "LoraLoader",
+    "class_type": "CLIPTextEncode",
     "inputs": {
-      "lora_name": "pixel-art-xl.safetensors",
-      "strength_model": 0.5,
-      "strength_clip": 0.5,
-      "model": [
-        "3",
-        0
-      ],
+      "text": "",
       "clip": [
-        "3",
+        "2",
         1
       ]
     }
   },
   "5": {
-    "class_type": "CLIPTextEncode",
+    "class_type": "FluxGuidance",
     "inputs": {
-      "text": "masterpiece, best quality, amazing quality, very aesthetic, pixel art, seamless dark navy blue wallpaper with tiny gold stars tile texture, top-down view, pixel art game tileset, stardew valley style, cozy farm game, soft shading, clean outlines",
-      "clip": [
-        "4",
-        1
+      "guidance": 3.5,
+      "conditioning": [
+        "3",
+        0
       ]
     }
   },
   "6": {
-    "class_type": "CLIPTextEncode",
-    "inputs": {
-      "text": "lowres, worst quality, bad quality, bad anatomy, bad hands, jpeg artifacts, signature, watermark, text, cropped, multiple views, out of frame, detailed background, scenery, blurry, 3d, realistic, photo, logo",
-      "clip": [
-        "4",
-        1
-      ]
-    }
-  },
-  "7": {
-    "class_type": "EmptyLatentImage",
+    "class_type": "EmptySD3LatentImage",
     "inputs": {
       "width": 1024,
       "height": 1024,
       "batch_size": 1
     }
   },
-  "8": {
+  "7": {
     "class_type": "KSampler",
     "inputs": {
       "seed": 7311042,
-      "steps": 28,
-      "cfg": 5.5,
-      "sampler_name": "euler_ancestral",
-      "scheduler": "normal",
+      "steps": 20,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
       "denoise": 1.0,
       "model": [
-        "4",
+        "2",
         0
       ],
       "positive": [
@@ -93,20 +77,20 @@
         0
       ],
       "negative": [
-        "6",
+        "4",
         0
       ],
       "latent_image": [
-        "7",
+        "6",
         0
       ]
     }
   },
-  "9": {
+  "8": {
     "class_type": "VAEDecode",
     "inputs": {
       "samples": [
-        "8",
+        "7",
         0
       ],
       "vae": [
@@ -115,12 +99,12 @@
       ]
     }
   },
-  "10": {
+  "9": {
     "class_type": "SaveImage",
     "inputs": {
       "filename_prefix": "sdv/wall_tilesheet_frame_0",
       "images": [
-        "9",
+        "8",
         0
       ]
     }
