@@ -51,6 +51,14 @@ python "${CLAUDE_SKILL_DIR}/scripts/new_mod.py" --type smapi+cp --name "My Mod" 
 ```
 Then fill in content following the reference docs. Prefix every custom ID with `{{ModId}}_` (CP) or `$"{ModManifest.UniqueID}_"` (C#).
 
+### Adding content (one command each)
+Prefer the generators over hand-writing JSON for the common requests; each writes the patch file, i18n keys, placeholder art and project registration, appends one `Include` (the author's files are not reformatted), refuses an existing ID, backs up what it edits, and validates:
+```
+python "${CLAUDE_SKILL_DIR}/scripts/add.py" npc|item|big-craftable|machine|crop|fruit-tree|recipe|shop-item|shop|mail|event|sid-sprite --mod "<[CP] folder>" --name ... [--dry-run]
+python "${CLAUDE_SKILL_DIR}/scripts/add.py" portrait-set --out <dir> --name "My Portraits" --npcs Abigail,Leo --frame 256
+```
+Field names come from the game's own data models (`assets/gamedata_fields.json`, regenerate with `gamedata_fields.py`; `gamedata.check_entry()` checks any entry). Not generated yet: furniture, hats/shirts/weapons, locations (needs the map tools). Event scripts are skeletons. Hand edits follow the reference files; check unfamiliar fields with `gamedata.py` before using them.
+
 ### Augmenting an existing mod
 1. Read `manifest.json`, `content.json` (and every `Include`d file), `i18n/`, and the asset folder before changing anything. For C#, read the csproj and ModEntry.
 2. If the mod is the user's own: edit in place, keep its Format version unless a needed feature requires bumping (say so when you bump).
